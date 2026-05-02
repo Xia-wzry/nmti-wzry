@@ -1,0 +1,22 @@
+# Cloudflare Pages 静态资源缓存配置
+# 让浏览器长期缓存图片/音频/JS，大幅减少重复请求
+
+# 所有 persona 图：一天强缓存 + 一周协商缓存
+/personas/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# 所有音频：一天强缓存
+/audio/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# vendor 第三方库：一周强缓存
+/vendor/*
+  Cache-Control: public, max-age=604800, immutable
+
+# JS 文件（带版本号 ?v=xxx，所以可以长期缓存）
+/*.js
+  Cache-Control: public, max-age=3600, stale-while-revalidate=86400
+
+# HTML：短缓存（允许快速迭代）
+/*.html
+  Cache-Control: public, max-age=300, stale-while-revalidate=3600

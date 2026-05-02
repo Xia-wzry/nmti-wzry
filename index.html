@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
+<link rel="preconnect" href="https://ai-native-d8ga6bjzwd88e7eeb-1424829144.ap-shanghai.app.tcloudbase.com" crossorigin>
+<link rel="preload" href="personas.js?v=20260502b" as="script">
+<link rel="preload" href="logic.js?v=20260502b" as="script">
+<link rel="preload" href="questions.js?v=20260502b" as="script">
 <title>NMTI · 农民TI</title>
 <style>
 :root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
@@ -140,6 +141,36 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 </style>
 </head>
 <body>
+<script>
+// === 最早预加载（不等 personas.js 下载完）===
+// 页面一解析到 body 就立刻启动 25 张图 + 音频下载
+(function(){
+  var IDS = ['aidawangzhe','bazhe','fengjinglongwang','guaidaojide','guashazhe',
+             'guyongzhe','hongbuff','hunzhe','huozhe','jiahao',
+             'jifenduobaoquan','kongdazhe','lanbuff','liulanggou','rongyaowangzhe',
+             'shizuoyongzhe','shufuzhe','sizhe','toutazhe','toutoufangpizhe',
+             'tuanduizhiguang','weimuzegang','wodizhe','zhener','zuzong'];
+  window.__earlyImgCache = {};
+  IDS.forEach(function(id){
+    var img = new Image();
+    img.src = 'personas/' + id + '.png?v=20260502';
+    window.__earlyImgCache[id] = img;
+  });
+  // 题目音频 + 插图预加载
+  var AUDIOS = ['audio/yase.mp3','audio/wuzetian.mp3','audio/wusha.mp3','audio/sunce.mp3',
+                'audio/zhongkui.mp3','audio/chengyaojin.mp3','audio/zhuangzhou.mp3','audio/makebolo.mp3'];
+  window.__earlyAudioCache = {};
+  AUDIOS.forEach(function(u){
+    var a = new Audio();
+    a.preload = 'auto';
+    a.src = u;
+    a.load();
+    window.__earlyAudioCache[u] = a;
+  });
+  var scoreImg = new Image();
+  scoreImg.src = 'audio/score.png';
+})();
+</script>
 <div id="daji-toast"></div>
 <div id="easter-toast"></div>
 
@@ -203,22 +234,53 @@ var Q = window.QUESTIONS;
 var cq=0, ans=new Array(Q.length).fill(null), au=null, ht=null;
 var isSecondRound=false; // 第15题D是否已经触发过重置
 
+// === 注册 Service Worker（离线缓存所有资源）===
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+
 function go(){
   document.getElementById('start').style.display='none';
   document.getElementById('nv').classList.add('sh');
   cq=0; ans=new Array(Q.length).fill(null);
+  // 用户点击了按钮 = 获得用户手势授权，此时强制激活所有音频元素
+  // （iOS Safari 要求必须用户交互后才能播放，提前 play+pause 能解锁）
+  try{
+    Object.keys(AMAP).forEach(function(src){
+      var el = document.getElementById(AMAP[src]);
+      if(el){
+        el.load();
+        // 静音 play 瞬间解锁（play 后立刻 pause 不会有声音漏出）
+        var orig = el.volume;
+        el.volume = 0;
+        var p = el.play();
+        if(p && p.then){
+          p.then(function(){ el.pause(); el.currentTime=0; el.volume=orig; }).catch(function(){});
+        }
+      }
+    });
+  }catch(e){}
   preloadAudios();
   rdr();
 }
 
 var audioCache={};
 function preloadAudios(){
+  // 早期缓存里的音频已在下载，合并进 audioCache 复用
+  if(window.__earlyAudioCache){
+    Object.keys(window.__earlyAudioCache).forEach(function(u){
+      if(!audioCache[u]) audioCache[u] = window.__earlyAudioCache[u];
+    });
+  }
+  // 兜底：如果有早期没覆盖的（比如 personas.js 里新加的音频），再扫一遍
   var urls=[];
   var imgUrls=[];
   for(var i=0;i<Q.length;i++){
     var q=Q[i];
     if(q.au) urls.push(q.au);
-    if(q.img) imgUrls.push(q.img);  // 题目插图（如 Q3 的 score.png）
+    if(q.img) imgUrls.push(q.img);
     if(q.o){for(var j=0;j<q.o.length;j++){if(q.o[j].au) urls.push(q.o[j].au);}}
   }
   urls.forEach(function(u){
@@ -228,7 +290,6 @@ function preloadAudios(){
       audioCache[u]=a;
     }
   });
-  // 同时预加载题目图片
   imgUrls.forEach(function(u){
     var img = new Image();
     img.src = u;
@@ -238,21 +299,25 @@ function preloadAudios(){
 // === 全局预加载：页面打开就开始悄悄下载所有 persona 图 ===
 var personaImgCache = {};
 function preloadAllPersonaImages(){
+  // 早期已下载，直接复用
+  if(window.__earlyImgCache){
+    Object.keys(window.__earlyImgCache).forEach(function(id){
+      personaImgCache[id] = window.__earlyImgCache[id];
+    });
+    return;
+  }
+  // 兜底路径（旧浏览器或早期脚本没执行）
   if(!window.PERSONAS) return;
-  var ids = Object.keys(window.PERSONAS);
-  ids.forEach(function(id){
+  Object.keys(window.PERSONAS).forEach(function(id){
     if(personaImgCache[id]) return;
     var img = new Image();
     var p = window.PERSONAS[id];
-    var src = (p && p.img) ? p.img : 'personas/' + id + '.png';
-    // 用同样的 cache-buster，确保和结果页加载的是同一份
-    img.src = src + '?v=20260502';
+    img.src = (p && p.img) ? (p.img + '?v=20260502') : ('personas/' + id + '.png?v=20260502');
     personaImgCache[id] = img;
   });
 }
-// 页面脚本加载完就立即启动（用户看起始页时就在后台下载）
+// 页面脚本加载完就立即启动（此时早期图片已在下载中）
 preloadAllPersonaImages();
-// 同时预载音频（优先高频用到的）
 preloadAudios();
 
 function rdr(){

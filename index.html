@@ -840,8 +840,36 @@ function saveAsImage(){
     return new Promise(function(res){ requestAnimationFrame(res); });
   }).then(function(){
     return html2canvas(page, {
-      backgroundColor:'#FAF7F2', scale:1.5, logging:false,
+      backgroundColor:'#FAF7F2', scale:2, logging:false,
       allowTaint:true, useCORS:false, imageTimeout:0,
+      // 克隆时把 :root 的 CSS 变量直接写到 <html> 上，防止变量失效导致全白
+      onclone: function(clonedDoc){
+        var root = clonedDoc.documentElement;
+        var vars = {
+          '--warm':'#D4634A',
+          '--wl':'rgba(212,99,74,.08)',
+          '--wb':'rgba(212,99,74,.18)',
+          '--gold':'#C8975A',
+          '--gl':'rgba(200,151,90,.10)',
+          '--gb':'rgba(200,151,90,.22)',
+          '--bg':'#FAF7F2',
+          '--card':'#fff',
+          '--txt':'#2D2D2D',
+          '--t2':'#666',
+          '--t3':'#999',
+          '--ln':'#EBEBEB'
+        };
+        Object.keys(vars).forEach(function(k){
+          root.style.setProperty(k, vars[k]);
+          clonedDoc.body.style.setProperty(k, vars[k]);
+        });
+        // 强制给 #res 显式颜色兜底，避免因变量解析失败整段变透明
+        var resEl = clonedDoc.getElementById('res');
+        if(resEl){
+          resEl.style.color = '#2D2D2D';
+          resEl.style.opacity = '1';
+        }
+      },
       ignoreElements: function(el){
         if(!el) return false;
         var id = el.id || '';

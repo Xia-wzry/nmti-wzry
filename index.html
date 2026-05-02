@@ -245,9 +245,26 @@ var optPlaying=false;
 var isSecondRound=false; // 第15题D是否已经触发过重置
 
 // === 注册 Service Worker（离线缓存所有资源）===
+// 检测到新版 SW 时自动一次性刷新，避免用户看到旧 HTML
 if('serviceWorker' in navigator){
   window.addEventListener('load', function(){
-    navigator.serviceWorker.register('sw.js').catch(function(){});
+    navigator.serviceWorker.register('sw.js').then(function(reg){
+      if(!reg) return;
+      // 已经有 SW 在控制页面时，监听更新
+      reg.addEventListener('updatefound', function(){
+        var newWorker = reg.installing;
+        if(!newWorker) return;
+        newWorker.addEventListener('statechange', function(){
+          if(newWorker.state === 'activated' && navigator.serviceWorker.controller){
+            // 新 SW 已激活且页面已被 SW 控制 → 说明是更新（不是首次）
+            if(!window.__sw_reloaded){
+              window.__sw_reloaded = true;
+              location.reload();
+            }
+          }
+        });
+      });
+    }).catch(function(){});
   });
 }
 

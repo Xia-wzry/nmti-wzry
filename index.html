@@ -9,9 +9,9 @@
 <link rel="preload" href="audio/score.png" as="image">
 <link rel="preload" href="audio/yase.mp3" as="audio">
 <link rel="preload" href="audio/wuzetian.mp3" as="audio">
-<link rel="preload" href="questions.js?v=20260502c" as="script">
-<link rel="preload" href="logic.js?v=20260502c" as="script">
-<link rel="preload" href="personas.js?v=20260502c" as="script">
+<link rel="preload" href="questions.js?v=20260502d" as="script">
+<link rel="preload" href="logic.js?v=20260502d" as="script">
+<link rel="preload" href="personas.js?v=20260502d" as="script">
 <title>NMTI · 农民TI</title>
 <style>
 :root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
@@ -149,29 +149,23 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 <body>
 <script>
 // === 分级预加载：首屏体验优先 ===
-// L1 立即：第3题 score.png + yase.mp3（已通过 <link preload> 下载）+ 第5题 wuzetian
-// L2 尽快（100ms 后）：第6/7题音频
-// L3 空闲时（3s 后或 idle）：25 张人格图（全部延后，不抢首屏带宽）
+// 策略：用 fetch 预热浏览器缓存，不创建 Audio 对象
+// 避免"多个 Audio 元素"带来的并发播放风险
 (function(){
-  window.__earlyAudioCache = {};
   window.__earlyImgCache = {};
 
   function preloadAudio(u){
-    if(window.__earlyAudioCache[u]) return;
-    var a = new Audio();
-    a.preload = 'auto';
-    a.src = u;
-    try{ a.load(); }catch(e){}
-    window.__earlyAudioCache[u] = a;
+    // 纯 fetch 预热，不创建 Audio 对象（更安全，不会误触发任何播放）
+    try{ fetch(u, {mode:'no-cors', credentials:'omit', cache:'force-cache'}).catch(function(){}); }catch(e){}
   }
 
   // L1：首屏立即需要（第3、5题）
   ['audio/yase.mp3','audio/wuzetian.mp3'].forEach(preloadAudio);
 
-  // L2：100ms 后下载剩余题目音频（第6/7题 + makebolo）
+  // L2：100ms 后下载剩余题目音频（第6/7题）
   setTimeout(function(){
     ['audio/wusha.mp3','audio/sunce.mp3','audio/zhongkui.mp3',
-     'audio/chengyaojin.mp3','audio/makebolo.mp3'].forEach(preloadAudio);
+     'audio/chengyaojin.mp3'].forEach(preloadAudio);
   }, 100);
 
   // L3：3 秒后 或 浏览器空闲时，才下载 25 张人格图（结果页才用得到，至少要过 15 题）
@@ -184,7 +178,7 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
     IDS.forEach(function(id){
       if(window.__earlyImgCache[id]) return;
       var img = new Image();
-      img.src = 'personas/' + id + '.png?v=20260502c';
+      img.src = 'personas/' + id + '.png?v=20260502d';
       window.__earlyImgCache[id] = img;
     });
   }
@@ -207,17 +201,6 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 <div class="st">NMTI</div>
 <div class="ss" style="font-size:14px;line-height:2">注意！NMTI的NM指的是农民哦～</div>
 <button class="bs" onclick="go()">开始测试</button>
-</div>
-
-<!-- 预加载音频池 -->
-<div style="display:none">
-<audio id="au_makebolo" src="audio/makebolo.mp3" preload="auto"></audio>
-<audio id="au_yase" src="audio/yase.mp3" preload="auto"></audio>
-<audio id="au_wuzetian" src="audio/wuzetian.mp3" preload="auto"></audio>
-<audio id="au_sunce" src="audio/sunce.mp3" preload="auto"></audio>
-<audio id="au_zhongkui" src="audio/zhongkui.mp3" preload="auto"></audio>
-<audio id="au_chengyaojin" src="audio/chengyaojin.mp3" preload="auto"></audio>
-<audio id="au_wusha" src="audio/wusha.mp3" preload="auto"></audio>
 </div>
 
 <div id="qa"></div>
@@ -250,13 +233,14 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 
 <script src="vendor/html2canvas.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
-<script src="questions.js?v=20260502c"></script>
-<script src="logic.js?v=20260502c"></script>
-<script src="personas.js?v=20260502c"></script>
+<script src="questions.js?v=20260502d"></script>
+<script src="logic.js?v=20260502d"></script>
+<script src="personas.js?v=20260502d"></script>
 
 <script>
 var Q = window.QUESTIONS;
-var cq=0, ans=new Array(Q.length).fill(null), au=null, ht=null;
+var cq=0, ans=new Array(Q.length).fill(null), ht=null;
+var optPlaying=false;
 var isSecondRound=false; // 第15题D是否已经触发过重置
 
 // === 注册 Service Worker（离线缓存所有资源）===
@@ -270,58 +254,87 @@ function go(){
   document.getElementById('start').style.display='none';
   document.getElementById('nv').classList.add('sh');
   cq=0; ans=new Array(Q.length).fill(null);
-  // 用户开始答题 = 立刻触发人格图下载（早期 idle 可能还没跑）
+  // 用户开始答题 = 立刻触发人格图下载
   if(window.__preloadPersonas) window.__preloadPersonas();
-  // 用户点击了按钮 = 获得用户手势授权，此时强制激活所有音频元素
-  // （iOS Safari 要求必须用户交互后才能播放，提前 play+pause 能解锁）
-  try{
-    Object.keys(AMAP).forEach(function(src){
-      var el = document.getElementById(AMAP[src]);
-      if(el){
-        el.load();
-        // 静音 play 瞬间解锁（play 后立刻 pause 不会有声音漏出）
-        var orig = el.volume;
-        el.volume = 0;
-        var p = el.play();
-        if(p && p.then){
-          p.then(function(){ el.pause(); el.currentTime=0; el.volume=orig; }).catch(function(){});
-        }
-      }
-    });
-  }catch(e){}
-  preloadAudios();
+  // iOS 音频解锁：在用户手势链内对全局 Audio 做一次 play+pause（用 data URL 静音帧，不影响真实音频）
+  unlockAudio();
   rdr();
 }
 
-var audioCache={};
-function preloadAudios(){
-  // 早期缓存里的音频已在下载，合并进 audioCache 复用
-  if(window.__earlyAudioCache){
-    Object.keys(window.__earlyAudioCache).forEach(function(u){
-      if(!audioCache[u]) audioCache[u] = window.__earlyAudioCache[u];
-    });
+// ========== 音频系统（全局唯一对象 + token 防并发）==========
+// 设计原则：
+// 1. 整个 APP 只用一个 Audio 对象（audioEl），彻底杜绝多元素并发播放
+// 2. 每次调 playAudio 递增 audioToken，旧的 onended/ontimeupdate 回调看到 token 不匹配直接退出
+// 3. stp() 真正彻底停止：pause + 清回调 + token++
+// 4. 预加载只用 fetch，不创建 Audio 对象，没有"多个 Audio 意外同时播"的可能
+var audioEl = null;
+var audioToken = 0;
+var audioUnlocked = false;
+
+function getGlobalAudio(){
+  if(!audioEl){
+    audioEl = new Audio();
+    audioEl.preload = 'auto';
   }
-  // 兜底：如果有早期没覆盖的（比如 personas.js 里新加的音频），再扫一遍
-  var urls=[];
-  var imgUrls=[];
-  for(var i=0;i<Q.length;i++){
-    var q=Q[i];
-    if(q.au) urls.push(q.au);
-    if(q.img) imgUrls.push(q.img);
-    if(q.o){for(var j=0;j<q.o.length;j++){if(q.o[j].au) urls.push(q.o[j].au);}}
-  }
-  urls.forEach(function(u){
-    if(!audioCache[u]){
-      var a=new Audio();
-      a.src=u; a.preload='auto'; a.load();
-      audioCache[u]=a;
-    }
-  });
-  imgUrls.forEach(function(u){
-    var img = new Image();
-    img.src = u;
-  });
+  return audioEl;
 }
+
+// 用 1 帧静音 mp3 解锁 iOS 音频权限（同步在手势链内）
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked = true;
+  try{
+    var el = getGlobalAudio();
+    var unlockToken = ++audioToken;
+    el.src = 'data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQxAADB8AhSmxhIIEVCSiJrDCQBTcu3UrAIwUdkRgQbFAZC1CQEwTJ9mjRvBA4UOLD8nKVOWfh+UlK3z/177OXrfOdKl7pyn3Xf//FJAhD2Lcn';
+    el.volume = 0;
+    var p = el.play();
+    if(p && p.then) p.then(function(){
+      // 如果期间有新音频被 playAudio 启动，unlockToken 已失效，什么都别做
+      if(unlockToken !== audioToken) return;
+      try{ el.pause(); el.currentTime=0; el.volume=1; }catch(e){}
+    }).catch(function(){});
+  }catch(e){}
+}
+
+function stp(){
+  audioToken++;
+  if(audioEl){
+    try{
+      audioEl.pause();
+      audioEl.ontimeupdate = null;
+      audioEl.onended = null;
+      audioEl.volume = 1;
+    }catch(e){}
+  }
+  optPlaying = false;
+}
+
+function playAudio(src, onEndCb, onTickCb){
+  stp();
+  var myToken = ++audioToken;
+  var el = getGlobalAudio();
+  try{ el.pause(); el.currentTime = 0; }catch(e){}
+  el.volume = 1;
+  el.src = src;
+  if(onTickCb){
+    el.ontimeupdate = function(){
+      if(myToken !== audioToken) { el.ontimeupdate = null; return; }
+      onTickCb(el);
+    };
+  }
+  if(onEndCb){
+    el.onended = function(){
+      if(myToken !== audioToken) return;
+      el.onended = null;
+      onEndCb();
+    };
+  }
+  var p = el.play();
+  if(p && p.then) p.catch(function(){});
+  return myToken;
+}
+// ========================================================
 
 // === 全局预加载：页面打开就开始悄悄下载所有 persona 图 ===
 var personaImgCache = {};
@@ -339,15 +352,16 @@ function preloadAllPersonaImages(){
     if(personaImgCache[id]) return;
     var img = new Image();
     var p = window.PERSONAS[id];
-    img.src = (p && p.img) ? (p.img + '?v=20260502') : ('personas/' + id + '.png?v=20260502');
+    img.src = (p && p.img) ? (p.img + '?v=20260502d') : ('personas/' + id + '.png?v=20260502d');
     personaImgCache[id] = img;
   });
 }
 // 页面脚本加载完就立即启动（此时早期图片已在下载中）
 preloadAllPersonaImages();
-preloadAudios();
 
 function rdr(){
+  // 切题一定先彻底停音频（防止上一题音频还在播）
+  stp();
   var a=document.getElementById('qa'), q=Q[cq], p=Math.round(cq/Q.length*100), sv=ans[cq];
   var tg=q.t==='judge'?'<span class="qtag tj">判断题</span>':q.t==='multi'?'<span class="qtag tm">多选题</span>':'<span class="qtag tc">选择题</span>';
   var auh=q.au?'<div class="aw"><button class="ab" onclick="pa(this,\''+q.au+'\')">🔊 重新播放</button></div>':'';
@@ -374,7 +388,8 @@ function rdr(){
     if(sv===q.o.length){addH()}
     else{ht=setTimeout(function(){if(cq===hidQ) addH()}, delay)}
   }
-  if(q.au){stp(); au=getAudio(q.au); au.play().catch(function(){})}
+  // 题目自身的音频（Q3 亚瑟、Q5 武则天）：进入题目即播
+  if(q.au) playAudio(q.au);
   optPlaying=false;
   uN();
 }
@@ -393,19 +408,11 @@ function addH(){
   a.appendChild(b);
 }
 
-function pa(b,s){stp(); au=getAudio(s); b.textContent='🔉 播放中…'; au.play(); au.onended=function(){b.textContent='🔊 重新播放'}}
-
-var AMAP={'audio/makebolo.mp3':'au_makebolo','audio/yase.mp3':'au_yase','audio/wuzetian.mp3':'au_wuzetian','audio/sunce.mp3':'au_sunce','audio/zhongkui.mp3':'au_zhongkui','audio/chengyaojin.mp3':'au_chengyaojin','audio/wusha.mp3':'au_wusha'};
-
-function getAudio(src){
-  var id=AMAP[src];
-  if(id){var el=document.getElementById(id);if(el){try{el.pause();el.currentTime=0;el.volume=1;}catch(e){}return el;}}
-  return new Audio(src);
+// 题目"重新播放"按钮
+function pa(b, s){
+  b.textContent='🔉 播放中…';
+  playAudio(s, function(){ b.textContent='🔊 重新播放'; });
 }
-
-function stp(){if(au){try{au.pause();au.currentTime=0;au.volume=1;}catch(e){}au.ontimeupdate=null;au=null}}
-
-var optPlaying=false;
 
 function pj(i){ans[cq]=i;document.querySelectorAll('.jb').forEach(function(b){b.classList.remove('sl')});document.querySelector('.jb[data-i="'+i+'"]').classList.add('sl');uN();setTimeout(autoN,350)}
 
@@ -422,32 +429,37 @@ function pc(i){
   var e=document.querySelector('.ob[data-i="'+i+'"]');if(e)e.classList.add('sl');
   uN();
 
-  stp(); optPlaying=false;
-
   if(optAu){
     optPlaying=true;
-    au=getAudio(optAu);
-    au.volume=1;
     var isQ6A=(cq===5 && i===0); // 第6题A选项淡出
-    au.ontimeupdate = function(){
-      if(!au) return;
+    var advanced=false;
+    function goNext(){
+      if(advanced) return;
+      advanced=true;
+      autoN();
+    }
+    playAudio(optAu, function(){
+      // 自然播放结束 兜底
+      goNext();
+    }, function(el){
       if(isQ6A){
-        if(au.currentTime>=1 && au.duration>1){
-          var pp=(au.currentTime-1)/(au.duration-1);
-          au.volume=Math.max(0,Math.min(1,1-pp));
+        if(el.currentTime>=1 && el.duration>1){
+          var pp=(el.currentTime-1)/(el.duration-1);
+          el.volume=Math.max(0,Math.min(1,1-pp));
         }
-        if(au.duration-au.currentTime<=0.4){
-          au.ontimeupdate=null;
-          autoN();
+        if(el.duration - el.currentTime <= 0.4){
+          el.ontimeupdate = null;
+          goNext();
         }
       }else{
-        if(au.duration-au.currentTime<=1.0){
-          au.ontimeupdate=null;
-          autoN();
+        if(el.duration - el.currentTime <= 1.0){
+          el.ontimeupdate = null;
+          goNext();
         }
       }
-    };
-    au.play().catch(function(){setTimeout(autoN,350)});
+    });
+    // 兜底：音频被浏览器拦截（iOS 低电模式等），3 秒强制下一题
+    setTimeout(function(){ if(!advanced && ans[cq]===i) goNext(); }, 6000);
   }else{
     setTimeout(autoN,350);
   }
@@ -519,7 +531,7 @@ function showR(){
     var tImg = new Image();
     tImg.onload = function(){ targetImgReady = true; };
     tImg.onerror = function(){ targetImgReady = true; }; // 失败也放行，避免卡死
-    tImg.src = window.PERSONAS[targetPid].img + '?v=20260502';
+    tImg.src = window.PERSONAS[targetPid].img + '?v=20260502d';
     // 如果已在缓存里（预加载过），瞬间就 ready
     if(tImg.complete) targetImgReady = true;
   } else {
@@ -628,7 +640,7 @@ function renderResult(){
     '<div class="lead">你的 <span class="nm">NMTI</span> 是</div>' +
     '<div class="hero-card">' +
       '<div class="hero-name">'+p.name+'</div>' +
-      '<div class="hero-img-box"><img class="hero-img" src="'+p.img+'?v=20260502" alt="'+p.name+'" decoding="sync" fetchpriority="high"></div>' +
+      '<div class="hero-img-box"><img class="hero-img" src="'+p.img+'?v=20260502d" alt="'+p.name+'" decoding="sync" fetchpriority="high"></div>' +
       '<div class="hero-slogan">"'+p.slogan+'"</div>' +
       '<div class="keywords">'+kwHtml+'</div>' +
     '</div>' +

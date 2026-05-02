@@ -736,9 +736,16 @@ function saveAsImage(){
   var btnRow = document.querySelector('.btn-row');
   var footer = document.querySelector('.footer');
   var nmEl = page.querySelector('.lead .nm');
+
+  // 显示加载态
   mask.classList.add('on');
+
   if(btnRow) btnRow.style.visibility='hidden';
   if(footer) footer.style.visibility='hidden';
+
+  // 截图期间把 saveMask 临时隐藏（html2canvas 的 foreignObject 渲染可能绕过 ignoreElements）
+  var maskBgBackup = mask.style.background;
+  mask.style.background = 'transparent';
   // html2canvas 对 background-clip:text 支持不好，临时换成纯色
   var nmStyleBackup = null;
   if(nmEl){
@@ -777,6 +784,7 @@ function saveAsImage(){
         if(btnRow) btnRow.style.visibility='';
         if(footer) footer.style.visibility='';
         if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+        mask.style.background = maskBgBackup; // 恢复白雾背景
         restoreImgs();
         var dataUrl = canvas.toDataURL('image/png');
         document.getElementById('mimg').src = dataUrl;
@@ -786,6 +794,7 @@ function saveAsImage(){
         if(btnRow) btnRow.style.visibility='';
         if(footer) footer.style.visibility='';
         if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+        mask.style.background = maskBgBackup;
         restoreImgs();
         mask.classList.remove('on');
         alert('生成失败：'+(e.message||e));

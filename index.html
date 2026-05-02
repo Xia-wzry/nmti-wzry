@@ -432,7 +432,7 @@ function pc(i){
 
   if(optAu){
     optPlaying=true;
-    var isQ6A=(cq===5 && i===0); // 第6题A选项淡出
+    var isQ6A=(cq===5 && i===0); // 第6题A选项（五杀凤鸣）做淡出 + 提前跳
     var advanced=false;
     function goNext(){
       if(advanced) return;
@@ -440,10 +440,11 @@ function pc(i){
       autoN();
     }
     playAudio(optAu, function(){
-      // 自然播放结束 兜底
+      // 自然播放结束后 → 下一题（Q7A/B/C 走这里，完整听完）
       goNext();
     }, function(el){
       if(isQ6A){
+        // 第6题A：1 秒后线性淡出，剩 0.4 秒就跳（避免五杀声音拖得太长）
         if(el.currentTime>=1 && el.duration>1){
           var pp=(el.currentTime-1)/(el.duration-1);
           el.volume=Math.max(0,Math.min(1,1-pp));
@@ -452,15 +453,11 @@ function pc(i){
           el.ontimeupdate = null;
           goNext();
         }
-      }else{
-        if(el.duration - el.currentTime <= 1.0){
-          el.ontimeupdate = null;
-          goNext();
-        }
       }
+      // 其他题（Q7等）不在 timeupdate 里提前跳，交给 onended 回调
     });
-    // 兜底：音频被浏览器拦截（iOS 低电模式等），3 秒强制下一题
-    setTimeout(function(){ if(!advanced && ans[cq]===i) goNext(); }, 6000);
+    // 兜底：音频彻底没能播（iOS 低电模式/静音开关）→ 6 秒后强制下一题
+    setTimeout(function(){ if(!advanced && ans[cq]===i) goNext(); }, 8000);
   }else{
     setTimeout(autoN,350);
   }
@@ -699,31 +696,48 @@ function rst(){
 }
 
 // === 截图功能 ===
-// 把页面里的外链图片替换成 data URL，绕开 CORS 对 canvas 的污染
-// （CloudBase 静态托管不返回 CORS 头，html2canvas 直接截会因为 canvas 污染输出白色；
-//   用 fetch 下载后转 data URL，html2canvas 看到的就是同源数据）
+// 把页面里的 img src 替换成 data URL，避免 html2canvas 因 CORS 输出白图
+// 用两种策略：先试 fetch(blob→dataURL)，失败再用 canvas 临时画一遍读 dataURL
+function imgToDataURL(src){
+  return new Promise(function(resolve){
+    // 策略 A：fetch
+    var done = false;
+    function finish(result){
+      if(done) return;
+      done = true;
+      resolve(result || null);
+    }
+    try{
+      fetch(src, {cache:'force-cache'})
+        .then(function(r){
+          if(!r.ok) throw new Error('bad status');
+          return r.blob();
+        })
+        .then(function(blob){
+          var fr = new FileReader();
+          fr.onload = function(){ finish(fr.result); };
+          fr.onerror = function(){ finish(null); };
+          fr.readAsDataURL(blob);
+        })
+        .catch(function(){ finish(null); });
+    }catch(e){ finish(null); }
+    // 5 秒兜底
+    setTimeout(function(){ finish(null); }, 5000);
+  });
+}
+
 function inlineImagesAsDataURL(root){
   var imgs = root.querySelectorAll('img[src]');
   var tasks = [];
   for(var i=0;i<imgs.length;i++){
     (function(img){
       var src = img.getAttribute('src');
-      if(!src || src.indexOf('blob:')===0 || src.indexOf('data:')===0) return;
+      if(!src || src.indexOf('data:')===0) return;
       tasks.push(
-        fetch(src, {cache:'force-cache'})
-          .then(function(r){
-            if(!r.ok) throw new Error('fetch failed');
-            return r.blob();
-          })
-          .then(function(blob){
-            return new Promise(function(res){
-              var fr = new FileReader();
-              fr.onload = function(){ img.setAttribute('src', fr.result); res(); };
-              fr.onerror = function(){ res(); };
-              fr.readAsDataURL(blob);
-            });
-          })
-          .catch(function(){}) // 失败就保持原 src（html2canvas 兜底成白色也没办法）
+        imgToDataURL(src).then(function(dataUrl){
+          if(dataUrl) img.setAttribute('src', dataUrl);
+          // 失败就保持原 src（html2canvas 可能仍能用，失败也不致命）
+        })
       );
     })(imgs[i]);
   }
@@ -731,7 +745,6 @@ function inlineImagesAsDataURL(root){
 }
 
 function saveAsImage(){
-  var mask = document.getElementById('saveMask');
   var page = document.getElementById('res');
   var btnRow = document.querySelector('.btn-row');
   var footer = document.querySelector('.footer');
@@ -740,26 +753,27 @@ function saveAsImage(){
   if(btnRow) btnRow.style.visibility='hidden';
   if(footer) footer.style.visibility='hidden';
 
-  // html2canvas 已知 bug：对 position:fixed 元素可能按文档流位置渲染出白雾
-  // 把所有浮层整体移到离屏容器，spinner 用克隆体临时顶替
+  // 移除所有 position:fixed 浮层（彻底杜绝 html2canvas 把白雾渲染进画布）
   var floatingEls = [
     document.getElementById('saveMask'),
     document.getElementById('imgModal'),
     document.getElementById('daji-toast'),
-    document.getElementById('easter-toast')
+    document.getElementById('easter-toast'),
+    document.getElementById('nv')  // ← 底部导航也是 position:fixed，之前漏了
   ].filter(Boolean);
   var floatingHolder = document.createElement('div');
-  floatingHolder.style.cssText = 'position:fixed;left:-99999px;top:-99999px;';
+  floatingHolder.style.cssText = 'position:fixed;left:-99999px;top:-99999px;width:1px;height:1px;overflow:hidden';
   var floatingParents = floatingEls.map(function(el){ return [el, el.parentNode, el.nextSibling]; });
   floatingEls.forEach(function(el){ floatingHolder.appendChild(el); });
   document.body.appendChild(floatingHolder);
 
-  // 页面上显示一个临时的 spinner（替代原 saveMask）
+  // 临时 spinner（反馈用户正在生成）
   var tmpMask = document.createElement('div');
   tmpMask.id = '__tmpSaveMask';
   tmpMask.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:14px;font-size:13px;color:#666';
   tmpMask.innerHTML = '<div style="width:36px;height:36px;border:3px solid #eee;border-top-color:#D4634A;border-radius:50%;animation:spin 1s linear infinite"></div><div>正在生成长图…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(tmpMask);
+
   // html2canvas 对 background-clip:text 支持不好，临时换成纯色
   var nmStyleBackup = null;
   if(nmEl){
@@ -768,61 +782,81 @@ function saveAsImage(){
       ';background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#D4634A !important;color:#D4634A !important');
   }
 
-  // 备份原 img src，截图完成后恢复
+  // 备份原 img src
   var originalSrcs = [];
   var imgNodes = page.querySelectorAll('img[src]');
   for(var i=0;i<imgNodes.length;i++){
     originalSrcs.push([imgNodes[i], imgNodes[i].getAttribute('src')]);
   }
-
   function restoreImgs(){
-    originalSrcs.forEach(function(pair){
-      pair[0].setAttribute('src', pair[1]);
+    originalSrcs.forEach(function(pair){ pair[0].setAttribute('src', pair[1]); });
+  }
+
+  function cleanup(){
+    if(btnRow) btnRow.style.visibility='';
+    if(footer) footer.style.visibility='';
+    if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+    floatingParents.forEach(function(rec){
+      var el = rec[0], parent = rec[1], next = rec[2];
+      if(parent) parent.insertBefore(el, next);
     });
+    if(floatingHolder.parentNode) floatingHolder.parentNode.removeChild(floatingHolder);
+    if(tmpMask.parentNode) tmpMask.parentNode.removeChild(tmpMask);
+    restoreImgs();
   }
 
   inlineImagesAsDataURL(page).then(function(){
-    requestAnimationFrame(function(){
-      html2canvas(page,{
-        backgroundColor:'#FAF7F2', scale:1.5, logging:false,
-        allowTaint:false, useCORS:true, imageTimeout:0,
-        ignoreElements: function(el){
-          if(!el) return false;
-          var id = el.id || '';
-          var cls = (el.className && typeof el.className === 'string') ? el.className : '';
-          if(id === 'saveMask' || id === 'imgModal' || id === 'daji-toast' || id === 'easter-toast' || id === '__tmpSaveMask') return true;
-          if(cls.indexOf('btn-row') >= 0 || cls === 'footer') return true;
-          return false;
-        }
-      }).then(function(canvas){
-        if(btnRow) btnRow.style.visibility='';
-        if(footer) footer.style.visibility='';
-        if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
-        // 恢复浮层到原位置
-        floatingParents.forEach(function(rec){
-          var el = rec[0], parent = rec[1], next = rec[2];
-          if(parent) parent.insertBefore(el, next);
-        });
-        if(floatingHolder.parentNode) floatingHolder.parentNode.removeChild(floatingHolder);
-        if(tmpMask.parentNode) tmpMask.parentNode.removeChild(tmpMask);
-        restoreImgs();
-        var dataUrl = canvas.toDataURL('image/png');
-        document.getElementById('mimg').src = dataUrl;
-        document.getElementById('imgModal').classList.add('on');
-      }).catch(function(e){
-        if(btnRow) btnRow.style.visibility='';
-        if(footer) footer.style.visibility='';
-        if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
-        floatingParents.forEach(function(rec){
-          var el = rec[0], parent = rec[1], next = rec[2];
-          if(parent) parent.insertBefore(el, next);
-        });
-        if(floatingHolder.parentNode) floatingHolder.parentNode.removeChild(floatingHolder);
-        if(tmpMask.parentNode) tmpMask.parentNode.removeChild(tmpMask);
-        restoreImgs();
-        alert('生成失败：'+(e.message||e));
-      });
+    // 等所有 img 的 src 切换后的新图片加载完
+    var imgs2 = page.querySelectorAll('img[src]');
+    var waits = [];
+    for(var j=0;j<imgs2.length;j++){
+      var im = imgs2[j];
+      if(im.complete && im.naturalWidth>0) continue;
+      waits.push(new Promise(function(res){
+        im.addEventListener('load', res, {once:true});
+        im.addEventListener('error', res, {once:true});
+        setTimeout(res, 3000);
+      }));
+    }
+    return Promise.all(waits);
+  }).then(function(){
+    return new Promise(function(res){ requestAnimationFrame(res); });
+  }).then(function(){
+    return html2canvas(page, {
+      backgroundColor:'#FAF7F2', scale:1.5, logging:false,
+      allowTaint:true, useCORS:false, imageTimeout:0,
+      ignoreElements: function(el){
+        if(!el) return false;
+        var id = el.id || '';
+        var cls = (el.className && typeof el.className === 'string') ? el.className : '';
+        if(id === 'saveMask' || id === 'imgModal' || id === 'daji-toast' || id === 'easter-toast' || id === '__tmpSaveMask' || id === 'nv') return true;
+        if(cls.indexOf('btn-row') >= 0 || cls === 'footer' || cls === 'nav' || cls.indexOf('nav ')>=0) return true;
+        return false;
+      }
     });
+  }).then(function(canvas){
+    cleanup();
+    var dataUrl;
+    try{
+      dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    }catch(e){
+      // canvas 被污染时 toDataURL 会抛，降级用 toBlob + createObjectURL
+      return new Promise(function(res){
+        canvas.toBlob(function(blob){
+          if(blob){ res(URL.createObjectURL(blob)); }
+          else { res(null); }
+        }, 'image/jpeg', 0.92);
+      }).then(function(url){
+        if(!url){ alert('截图因浏览器安全策略无法生成，请截屏保存'); return; }
+        document.getElementById('mimg').src = url;
+        document.getElementById('imgModal').classList.add('on');
+      });
+    }
+    document.getElementById('mimg').src = dataUrl;
+    document.getElementById('imgModal').classList.add('on');
+  }).catch(function(e){
+    cleanup();
+    alert('生成失败：'+(e.message||e));
   });
 }
 function closeImgModal(){

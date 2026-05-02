@@ -4,9 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="preconnect" href="https://ai-native-d8ga6bjzwd88e7eeb-1424829144.ap-shanghai.app.tcloudbase.com" crossorigin>
-<link rel="preload" href="personas.js?v=20260502b" as="script">
-<link rel="preload" href="logic.js?v=20260502b" as="script">
-<link rel="preload" href="questions.js?v=20260502b" as="script">
+<!-- 首屏关键资源：HTML 一下来就并发下载，不等 JS -->
+<link rel="preload" href="audio/logo.jpg" as="image" fetchpriority="high">
+<link rel="preload" href="audio/score.svg" as="image" type="image/svg+xml">
+<link rel="preload" href="audio/yase.mp3" as="audio">
+<link rel="preload" href="audio/wuzetian.mp3" as="audio">
+<link rel="preload" href="questions.js?v=20260502c" as="script">
+<link rel="preload" href="logic.js?v=20260502c" as="script">
+<link rel="preload" href="personas.js?v=20260502c" as="script">
 <title>NMTI · 农民TI</title>
 <style>
 :root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
@@ -143,33 +148,52 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 </head>
 <body>
 <script>
-// === 最早预加载（不等 personas.js 下载完）===
-// 页面一解析到 body 就立刻启动 25 张图 + 音频下载
+// === 分级预加载：首屏体验优先 ===
+// L1 立即：第3题 score.png + yase.mp3（已通过 <link preload> 下载）+ 第5题 wuzetian
+// L2 尽快（100ms 后）：第6/7题音频
+// L3 空闲时（3s 后或 idle）：25 张人格图（全部延后，不抢首屏带宽）
 (function(){
+  window.__earlyAudioCache = {};
+  window.__earlyImgCache = {};
+
+  function preloadAudio(u){
+    if(window.__earlyAudioCache[u]) return;
+    var a = new Audio();
+    a.preload = 'auto';
+    a.src = u;
+    try{ a.load(); }catch(e){}
+    window.__earlyAudioCache[u] = a;
+  }
+
+  // L1：首屏立即需要（第3、5题）
+  ['audio/yase.mp3','audio/wuzetian.mp3'].forEach(preloadAudio);
+
+  // L2：100ms 后下载剩余题目音频（第6/7题 + makebolo）
+  setTimeout(function(){
+    ['audio/wusha.mp3','audio/sunce.mp3','audio/zhongkui.mp3',
+     'audio/chengyaojin.mp3','audio/makebolo.mp3'].forEach(preloadAudio);
+  }, 100);
+
+  // L3：3 秒后 或 浏览器空闲时，才下载 25 张人格图（结果页才用得到，至少要过 15 题）
   var IDS = ['aidawangzhe','bazhe','fengjinglongwang','guaidaojide','guashazhe',
              'guyongzhe','hongbuff','hunzhe','huozhe','jiahao',
              'jifenduobaoquan','kongdazhe','lanbuff','liulanggou','rongyaowangzhe',
              'shizuoyongzhe','shufuzhe','sizhe','toutazhe','toutoufangpizhe',
              'tuanduizhiguang','weimuzegang','wodizhe','zhener','zuzong'];
-  window.__earlyImgCache = {};
-  IDS.forEach(function(id){
-    var img = new Image();
-    img.src = 'personas/' + id + '.png?v=20260502';
-    window.__earlyImgCache[id] = img;
-  });
-  // 题目音频 + 插图预加载
-  var AUDIOS = ['audio/yase.mp3','audio/wuzetian.mp3','audio/wusha.mp3','audio/sunce.mp3',
-                'audio/zhongkui.mp3','audio/chengyaojin.mp3','audio/zhuangzhou.mp3','audio/makebolo.mp3'];
-  window.__earlyAudioCache = {};
-  AUDIOS.forEach(function(u){
-    var a = new Audio();
-    a.preload = 'auto';
-    a.src = u;
-    a.load();
-    window.__earlyAudioCache[u] = a;
-  });
-  var scoreImg = new Image();
-  scoreImg.src = 'audio/score.png';
+  function preloadPersonas(){
+    IDS.forEach(function(id){
+      if(window.__earlyImgCache[id]) return;
+      var img = new Image();
+      img.src = 'personas/' + id + '.png?v=20260502c';
+      window.__earlyImgCache[id] = img;
+    });
+  }
+  window.__preloadPersonas = preloadPersonas;
+  if(window.requestIdleCallback){
+    requestIdleCallback(preloadPersonas, {timeout:3000});
+  }else{
+    setTimeout(preloadPersonas, 3000);
+  }
 })();
 </script>
 <div id="daji-toast"></div>
@@ -226,9 +250,9 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 
 <script src="vendor/html2canvas.min.js"></script>
 <script src="vendor/qrcode.min.js"></script>
-<script src="questions.js?v=20260502b"></script>
-<script src="logic.js?v=20260502b"></script>
-<script src="personas.js?v=20260502b"></script>
+<script src="questions.js?v=20260502c"></script>
+<script src="logic.js?v=20260502c"></script>
+<script src="personas.js?v=20260502c"></script>
 
 <script>
 var Q = window.QUESTIONS;
@@ -246,6 +270,8 @@ function go(){
   document.getElementById('start').style.display='none';
   document.getElementById('nv').classList.add('sh');
   cq=0; ans=new Array(Q.length).fill(null);
+  // 用户开始答题 = 立刻触发人格图下载（早期 idle 可能还没跑）
+  if(window.__preloadPersonas) window.__preloadPersonas();
   // 用户点击了按钮 = 获得用户手势授权，此时强制激活所有音频元素
   // （iOS Safari 要求必须用户交互后才能播放，提前 play+pause 能解锁）
   try{

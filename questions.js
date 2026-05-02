@@ -26,7 +26,7 @@ window.QUESTIONS = [
 
   // 3: 亚瑟唱歌
   {
-    t:'judge', sym:['\u2705','\u274C','\u2753'], au:'audio/yase.mp3', img:'audio/score.png',
+    t:'judge', sym:['\u2705','\u274C','\u2753'], au:'audio/yase.mp3', img:'audio/score.svg',
     tx:'以下这段五线谱是否正确演奏老亚瑟的美妙歌喉？',
     o:[
       {s:{social:1}},

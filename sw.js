@@ -1,50 +1,33 @@
 // NMTI Service Worker - 离线缓存静态资源
-// 策略：stale-while-revalidate（先返回缓存，后台更新）
-const CACHE_VERSION = 'nmti-v20260502-d';
+// 策略：install 只预缓存首屏关键资源，其他靠 fetch 懒缓存（stale-while-revalidate）
+// 避免 install 时把 25 张图 + 8 音频全下完，抢占首屏带宽
+const CACHE_VERSION = 'nmti-v20260502-e';
 const CACHE_NAME = 'nmti-assets-' + CACHE_VERSION;
 
-// 核心资源（首次访问时预缓存）
+// 首屏必需（install 预缓存，保证离线可用 + 二次打开极速）
+// 其他 22 张人格图、次要音频靠 fetch 懒缓存
 const CORE_ASSETS = [
   '/',
   '/index.html',
-  '/questions.js?v=20260502b',
-  '/logic.js?v=20260502b',
-  '/personas.js?v=20260502b',
+  '/questions.js?v=20260502c',
+  '/logic.js?v=20260502c',
+  '/personas.js?v=20260502c',
   '/vendor/html2canvas.min.js',
   '/vendor/qrcode.min.js',
   '/audio/logo.jpg',
-  '/audio/score.png',
+  '/audio/score.svg',
   '/audio/yase.mp3',
-  '/audio/wusha.mp3',
-  '/audio/wuzetian.mp3',
-  '/audio/sunce.mp3',
-  '/audio/zhongkui.mp3',
-  '/audio/chengyaojin.mp3',
-  '/audio/zhuangzhou.mp3',
-  '/audio/makebolo.mp3'
+  '/audio/wuzetian.mp3'
 ];
 
-// persona 图（25 张）
-const PERSONAS = [
-  'aidawangzhe','bazhe','fengjinglongwang','guaidaojide','guashazhe',
-  'guyongzhe','hongbuff','hunzhe','huozhe','jiahao',
-  'jifenduobaoquan','kongdazhe','lanbuff','liulanggou','rongyaowangzhe',
-  'shizuoyongzhe','shufuzhe','sizhe','toutazhe','toutoufangpizhe',
-  'tuanduizhiguang','weimuzegang','wodizhe','zhener','zuzong'
-];
-const PERSONA_ASSETS = PERSONAS.map(id => '/personas/' + id + '.png?v=20260502');
-
-const ALL_ASSETS = CORE_ASSETS.concat(PERSONA_ASSETS);
-
-// 安装：预缓存所有资源
+// 安装：只预缓存核心
 self.addEventListener('install', function(e){
   e.waitUntil(
     caches.open(CACHE_NAME).then(function(cache){
-      // 批量缓存（失败不中断整个流程）
       return Promise.all(
-        ALL_ASSETS.map(function(url){
+        CORE_ASSETS.map(function(url){
           return cache.add(url).catch(function(err){
-            console.warn('SW cache miss:', url, err.message);
+            // 单个失败不阻塞
           });
         })
       );
@@ -71,31 +54,26 @@ self.addEventListener('activate', function(e){
   );
 });
 
-// 拦截请求：stale-while-revalidate 策略
+// 拦截请求：stale-while-revalidate
 self.addEventListener('fetch', function(e){
   var req = e.request;
-  // 只处理同源 GET
   if(req.method !== 'GET') return;
   var url = new URL(req.url);
   if(url.origin !== self.location.origin) return;
-  // 不缓存 admin 页面（需要实时数据）
   if(url.pathname.indexOf('/admin') === 0) return;
-  // 不缓存云函数调用
   if(url.hostname.indexOf('tcloudbase.com') >= 0) return;
 
   e.respondWith(
     caches.open(CACHE_NAME).then(function(cache){
       return cache.match(req).then(function(cached){
-        // 并发发起网络请求（更新缓存）
         var fetchPromise = fetch(req).then(function(resp){
           if(resp && resp.status === 200){
             cache.put(req, resp.clone()).catch(function(){});
           }
           return resp;
         }).catch(function(){
-          return cached; // 网络失败用缓存
+          return cached;
         });
-        // 有缓存就立即返回，否则等网络
         return cached || fetchPromise;
       });
     })

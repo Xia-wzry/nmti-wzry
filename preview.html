@@ -6,7 +6,6 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>NMTI 结果页预览</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
 :root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{min-height:100%}
@@ -67,7 +66,7 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 
 <div class="page" id="page"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="vendor/qrcode.min.js"></script>
 <script src="personas.js?v=20260502b"></script>
 <script>
 var ids = Object.keys(window.PERSONAS);

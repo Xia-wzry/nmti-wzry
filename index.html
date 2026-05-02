@@ -8,7 +8,6 @@
 <meta http-equiv="Expires" content="0">
 <title>NMTI · 农民TI</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
 :root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{height:100%}
@@ -193,8 +192,8 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
   <div class="mtip">长按图片 → 保存到相册</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="vendor/qrcode.min.js"></script>
 <script src="questions.js?v=20260502b"></script>
 <script src="logic.js?v=20260502b"></script>
 <script src="personas.js?v=20260502b"></script>
@@ -215,9 +214,11 @@ function go(){
 var audioCache={};
 function preloadAudios(){
   var urls=[];
+  var imgUrls=[];
   for(var i=0;i<Q.length;i++){
     var q=Q[i];
     if(q.au) urls.push(q.au);
+    if(q.img) imgUrls.push(q.img);  // 题目插图（如 Q3 的 score.png）
     if(q.o){for(var j=0;j<q.o.length;j++){if(q.o[j].au) urls.push(q.o[j].au);}}
   }
   urls.forEach(function(u){
@@ -226,6 +227,11 @@ function preloadAudios(){
       a.src=u; a.preload='auto'; a.load();
       audioCache[u]=a;
     }
+  });
+  // 同时预加载题目图片
+  imgUrls.forEach(function(u){
+    var img = new Image();
+    img.src = u;
   });
 }
 
@@ -603,7 +609,7 @@ function saveAsImage(){
   }
   requestAnimationFrame(function(){
     html2canvas(page,{
-      backgroundColor:'#FAF7F2', scale:2, logging:false,
+      backgroundColor:'#FAF7F2', scale:1.5, logging:false,
       allowTaint:true, useCORS:true, imageTimeout:0,
       // 排除干扰元素：遮罩 / 弹窗 / 按钮行 / footer / 顶部 toast
       // 避免 html2canvas 克隆 DOM 时把 fixed 遮罩一起渲染成白雾

@@ -229,6 +229,26 @@ function preloadAudios(){
   });
 }
 
+// === 全局预加载：页面打开就开始悄悄下载所有 persona 图 ===
+var personaImgCache = {};
+function preloadAllPersonaImages(){
+  if(!window.PERSONAS) return;
+  var ids = Object.keys(window.PERSONAS);
+  ids.forEach(function(id){
+    if(personaImgCache[id]) return;
+    var img = new Image();
+    var p = window.PERSONAS[id];
+    var src = (p && p.img) ? p.img : 'personas/' + id + '.png';
+    // 用同样的 cache-buster，确保和结果页加载的是同一份
+    img.src = src + '?v=20260502';
+    personaImgCache[id] = img;
+  });
+}
+// 页面脚本加载完就立即启动（用户看起始页时就在后台下载）
+preloadAllPersonaImages();
+// 同时预载音频（优先高频用到的）
+preloadAudios();
+
 function rdr(){
   var a=document.getElementById('qa'), q=Q[cq], p=Math.round(cq/Q.length*100), sv=ans[cq];
   var tg=q.t==='judge'?'<span class="qtag tj">判断题</span>':q.t==='multi'?'<span class="qtag tm">多选题</span>':'<span class="qtag tc">选择题</span>';
@@ -390,6 +410,21 @@ function showR(){
   var fill=document.getElementById('ldFill'); var tip=document.getElementById('ldTip');
   fill.style.width='0%';tip.textContent='';
 
+  // 提前预判人格 id，启动目标图片高优先级加载
+  var targetPid = null;
+  try{ targetPid = window.NMTI_JUDGE(ans); }catch(e){}
+  var targetImgReady = false;
+  if(targetPid && window.PERSONAS && window.PERSONAS[targetPid]){
+    var tImg = new Image();
+    tImg.onload = function(){ targetImgReady = true; };
+    tImg.onerror = function(){ targetImgReady = true; }; // 失败也放行，避免卡死
+    tImg.src = window.PERSONAS[targetPid].img + '?v=20260502';
+    // 如果已在缓存里（预加载过），瞬间就 ready
+    if(tImg.complete) targetImgReady = true;
+  } else {
+    targetImgReady = true;
+  }
+
   var pool=TIPS.slice(); var count=3+Math.floor(Math.random()*3); var picked=[];
   for(var i=0;i<count&&pool.length>0;i++){var idx=Math.floor(Math.random()*pool.length);picked.push(pool.splice(idx,1)[0])}
   var total=picked.length*1000+Math.floor(Math.random()*1000)+500;
@@ -401,7 +436,19 @@ function showR(){
     },i*1000);
   });
   setTimeout(function(){fill.style.width='100%'},total-400);
-  setTimeout(function(){ld.classList.remove('on');renderResult();},total);
+  // 最终切换到结果页：等目标图加载完（最多多等 3 秒兜底）
+  setTimeout(function(){
+    var waitStart = Date.now();
+    function tryShow(){
+      if(targetImgReady || Date.now()-waitStart > 3000){
+        ld.classList.remove('on');
+        renderResult();
+      } else {
+        setTimeout(tryShow, 100);
+      }
+    }
+    tryShow();
+  },total);
 }
 
 // === 结果页渲染 ===
@@ -480,7 +527,7 @@ function renderResult(){
     '<div class="lead">你的 <span class="nm">NMTI</span> 是</div>' +
     '<div class="hero-card">' +
       '<div class="hero-name">'+p.name+'</div>' +
-      '<div class="hero-img-box"><img class="hero-img" src="'+p.img+'?v=20260502" alt="'+p.name+'"></div>' +
+      '<div class="hero-img-box"><img class="hero-img" src="'+p.img+'?v=20260502" alt="'+p.name+'" decoding="sync" fetchpriority="high"></div>' +
       '<div class="hero-slogan">"'+p.slogan+'"</div>' +
       '<div class="keywords">'+kwHtml+'</div>' +
     '</div>' +

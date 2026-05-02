@@ -699,6 +699,37 @@ function rst(){
 }
 
 // === 截图功能 ===
+// 把页面里的外链图片替换成 data URL，绕开 CORS 对 canvas 的污染
+// （CloudBase 静态托管不返回 CORS 头，html2canvas 直接截会因为 canvas 污染输出白色；
+//   用 fetch 下载后转 data URL，html2canvas 看到的就是同源数据）
+function inlineImagesAsDataURL(root){
+  var imgs = root.querySelectorAll('img[src]');
+  var tasks = [];
+  for(var i=0;i<imgs.length;i++){
+    (function(img){
+      var src = img.getAttribute('src');
+      if(!src || src.indexOf('blob:')===0 || src.indexOf('data:')===0) return;
+      tasks.push(
+        fetch(src, {cache:'force-cache'})
+          .then(function(r){
+            if(!r.ok) throw new Error('fetch failed');
+            return r.blob();
+          })
+          .then(function(blob){
+            return new Promise(function(res){
+              var fr = new FileReader();
+              fr.onload = function(){ img.setAttribute('src', fr.result); res(); };
+              fr.onerror = function(){ res(); };
+              fr.readAsDataURL(blob);
+            });
+          })
+          .catch(function(){}) // 失败就保持原 src（html2canvas 兜底成白色也没办法）
+      );
+    })(imgs[i]);
+  }
+  return Promise.all(tasks);
+}
+
 function saveAsImage(){
   var mask = document.getElementById('saveMask');
   var page = document.getElementById('res');
@@ -715,34 +746,50 @@ function saveAsImage(){
     nmEl.setAttribute('style', nmStyleBackup +
       ';background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#D4634A !important;color:#D4634A !important');
   }
-  requestAnimationFrame(function(){
-    html2canvas(page,{
-      backgroundColor:'#FAF7F2', scale:1.5, logging:false,
-      allowTaint:true, useCORS:true, imageTimeout:0,
-      // 排除干扰元素：遮罩 / 弹窗 / 按钮行 / footer / 顶部 toast
-      // 避免 html2canvas 克隆 DOM 时把 fixed 遮罩一起渲染成白雾
-      ignoreElements: function(el){
-        if(!el || !el.id && !el.className) return false;
-        var id = el.id || '';
-        var cls = (el.className && typeof el.className === 'string') ? el.className : '';
-        if(id === 'saveMask' || id === 'imgModal' || id === 'daji-toast' || id === 'easter-toast') return true;
-        if(cls.indexOf('btn-row') >= 0 || cls === 'footer') return true;
-        return false;
-      }
-    }).then(function(canvas){
-      if(btnRow) btnRow.style.visibility='';
-      if(footer) footer.style.visibility='';
-      if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
-      var dataUrl = canvas.toDataURL('image/png');
-      document.getElementById('mimg').src = dataUrl;
-      mask.classList.remove('on');
-      document.getElementById('imgModal').classList.add('on');
-    }).catch(function(e){
-      if(btnRow) btnRow.style.visibility='';
-      if(footer) footer.style.visibility='';
-      if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
-      mask.classList.remove('on');
-      alert('生成失败：'+(e.message||e));
+
+  // 备份原 img src，截图完成后恢复
+  var originalSrcs = [];
+  var imgNodes = page.querySelectorAll('img[src]');
+  for(var i=0;i<imgNodes.length;i++){
+    originalSrcs.push([imgNodes[i], imgNodes[i].getAttribute('src')]);
+  }
+
+  function restoreImgs(){
+    originalSrcs.forEach(function(pair){
+      pair[0].setAttribute('src', pair[1]);
+    });
+  }
+
+  inlineImagesAsDataURL(page).then(function(){
+    requestAnimationFrame(function(){
+      html2canvas(page,{
+        backgroundColor:'#FAF7F2', scale:1.5, logging:false,
+        allowTaint:false, useCORS:true, imageTimeout:0,
+        ignoreElements: function(el){
+          if(!el) return false;
+          var id = el.id || '';
+          var cls = (el.className && typeof el.className === 'string') ? el.className : '';
+          if(id === 'saveMask' || id === 'imgModal' || id === 'daji-toast' || id === 'easter-toast') return true;
+          if(cls.indexOf('btn-row') >= 0 || cls === 'footer') return true;
+          return false;
+        }
+      }).then(function(canvas){
+        if(btnRow) btnRow.style.visibility='';
+        if(footer) footer.style.visibility='';
+        if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+        restoreImgs();
+        var dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('mimg').src = dataUrl;
+        mask.classList.remove('on');
+        document.getElementById('imgModal').classList.add('on');
+      }).catch(function(e){
+        if(btnRow) btnRow.style.visibility='';
+        if(footer) footer.style.visibility='';
+        if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+        restoreImgs();
+        mask.classList.remove('on');
+        alert('生成失败：'+(e.message||e));
+      });
     });
   });
 }

@@ -784,11 +784,11 @@ function saveAsImage(){
   floatingEls.forEach(function(el){ floatingHolder.appendChild(el); });
   document.body.appendChild(floatingHolder);
 
-  // 临时 spinner（反馈用户正在生成）
+  // 用完全透明的容器，只放 spinner 和文字在中间（html2canvas 即便渲染也不会白雾）
   var tmpMask = document.createElement('div');
   tmpMask.id = '__tmpSaveMask';
-  tmpMask.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.88);display:flex;align-items:center;justify-content:center;z-index:99999;flex-direction:column;gap:14px;font-size:13px;color:#666';
-  tmpMask.innerHTML = '<div style="width:36px;height:36px;border:3px solid #eee;border-top-color:#D4634A;border-radius:50%;animation:spin 1s linear infinite"></div><div>正在生成长图…</div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
+  tmpMask.style.cssText = 'position:fixed;inset:0;background:transparent;display:flex;align-items:center;justify-content:center;z-index:99999;pointer-events:none';
+  tmpMask.innerHTML = '<div style="background:rgba(45,45,45,.88);color:#fff;padding:14px 24px;border-radius:24px;display:flex;align-items:center;gap:10px;font-size:14px;box-shadow:0 6px 20px rgba(0,0,0,.25)"><div style="width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite"></div><span>生成长图中…</span></div><style>@keyframes spin{to{transform:rotate(360deg)}}</style>';
   document.body.appendChild(tmpMask);
 
   // html2canvas 对 background-clip:text 支持不好，临时换成纯色
@@ -839,36 +839,70 @@ function saveAsImage(){
   }).then(function(){
     return new Promise(function(res){ requestAnimationFrame(res); });
   }).then(function(){
-    return html2canvas(page, {
+    // 把 #res 从 flex 父容器里 detach 到独立截图容器，
+    // 避免 flex 布局让 html2canvas 测量高度出错
+    var shotBox = document.createElement('div');
+    shotBox.id = '__shotBox';
+    shotBox.style.cssText = 'position:absolute;left:0;top:0;width:' + (page.offsetWidth||390) + 'px;max-width:420px;background:#FAF7F2;padding:14px 18px 32px;z-index:-1;opacity:1;overflow:visible';
+    var resHolder = page.parentNode;
+    var resNext = page.nextSibling;
+    shotBox.appendChild(page);
+    document.body.appendChild(shotBox);
+    // 记录原位置用于恢复
+    window.__shotBoxRestore = function(){
+      if(resHolder) resHolder.insertBefore(page, resNext);
+      if(shotBox.parentNode) shotBox.parentNode.removeChild(shotBox);
+    };
+
+    return html2canvas(shotBox, {
       backgroundColor:'#FAF7F2', scale:2, logging:false,
       allowTaint:true, useCORS:false, imageTimeout:0,
       // 克隆时把 :root 的 CSS 变量直接写到 <html> 上，防止变量失效导致全白
       onclone: function(clonedDoc){
         var root = clonedDoc.documentElement;
         var vars = {
-          '--warm':'#D4634A',
-          '--wl':'rgba(212,99,74,.08)',
-          '--wb':'rgba(212,99,74,.18)',
-          '--gold':'#C8975A',
-          '--gl':'rgba(200,151,90,.10)',
-          '--gb':'rgba(200,151,90,.22)',
-          '--bg':'#FAF7F2',
-          '--card':'#fff',
-          '--txt':'#2D2D2D',
-          '--t2':'#666',
-          '--t3':'#999',
-          '--ln':'#EBEBEB'
+          '--warm':'#D4634A','--wl':'rgba(212,99,74,.08)','--wb':'rgba(212,99,74,.18)',
+          '--gold':'#C8975A','--gl':'rgba(200,151,90,.10)','--gb':'rgba(200,151,90,.22)',
+          '--bg':'#FAF7F2','--card':'#fff','--txt':'#2D2D2D','--t2':'#666','--t3':'#999','--ln':'#EBEBEB'
         };
         Object.keys(vars).forEach(function(k){
           root.style.setProperty(k, vars[k]);
           clonedDoc.body.style.setProperty(k, vars[k]);
         });
-        // 强制给 #res 显式颜色兜底，避免因变量解析失败整段变透明
         var resEl = clonedDoc.getElementById('res');
         if(resEl){
           resEl.style.color = '#2D2D2D';
           resEl.style.opacity = '1';
+          resEl.style.animation = 'none';
+          resEl.style.display = 'block';
         }
+        var shot = clonedDoc.getElementById('__shotBox');
+        if(shot){
+          shot.style.zIndex = 'auto';
+          shot.style.position = 'static';
+        }
+        // html2canvas 1.4.1 对 var() 支持差：直接在 cloneDoc 里把所有用 var 的元素改成硬编码颜色
+        var fixups = [
+          ['.lead',          {color:'#999'}],
+          ['.hero-name',     {color:'#2D2D2D'}],
+          ['.hero-slogan',   {color:'#666'}],
+          ['.kw',            {color:'#D4634A', background:'rgba(212,99,74,.08)', borderColor:'rgba(212,99,74,.18)'}],
+          ['.stat-label',    {color:'#999'}],
+          ['.stat-value',    {color:'#2D2D2D'}],
+          ['.stat-value .num', {color:'#D4634A'}],
+          ['.stat-extra',    {color:'#C8975A'}],
+          ['.desc-text',     {color:'#444'}],
+          ['.desc-note',     {color:'#888'}],
+          ['.qr-line1',      {color:'#2D2D2D'}],
+          ['.qr-line2',      {color:'#666'}],
+          ['.qr-tip',        {color:'#888'}]
+        ];
+        fixups.forEach(function(pair){
+          var sel = pair[0], styles = pair[1];
+          clonedDoc.querySelectorAll(sel).forEach(function(el){
+            Object.keys(styles).forEach(function(p){ el.style[p] = styles[p]; });
+          });
+        });
       },
       ignoreElements: function(el){
         if(!el) return false;
@@ -880,6 +914,7 @@ function saveAsImage(){
       }
     });
   }).then(function(canvas){
+    if(window.__shotBoxRestore){ window.__shotBoxRestore(); window.__shotBoxRestore=null; }
     cleanup();
     var dataUrl;
     try{
@@ -900,6 +935,7 @@ function saveAsImage(){
     document.getElementById('mimg').src = dataUrl;
     document.getElementById('imgModal').classList.add('on');
   }).catch(function(e){
+    if(window.__shotBoxRestore){ window.__shotBoxRestore(); window.__shotBoxRestore=null; }
     cleanup();
     alert('生成失败：'+(e.message||e));
   });

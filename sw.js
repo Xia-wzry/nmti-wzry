@@ -1,6 +1,6 @@
 // NMTI Service Worker - 离线缓存静态资源
 // 策略：install 只预缓存首屏关键资源，其他靠 fetch 懒缓存（stale-while-revalidate）
-const CACHE_VERSION = 'nmti-v20260502-j';
+const CACHE_VERSION = 'nmti-v20260502-k';
 const CACHE_NAME = 'nmti-assets-' + CACHE_VERSION;
 
 // 首屏必需（install 预缓存）

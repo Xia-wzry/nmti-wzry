@@ -1,7 +1,7 @@
 // NMTI Service Worker - 离线缓存静态资源
 // 策略：install 只预缓存首屏关键资源，其他靠 fetch 懒缓存（stale-while-revalidate）
 // 避免 install 时把 25 张图 + 8 音频全下完，抢占首屏带宽
-const CACHE_VERSION = 'nmti-v20260502-e';
+const CACHE_VERSION = 'nmti-v20260502-f';
 const CACHE_NAME = 'nmti-assets-' + CACHE_VERSION;
 
 // 首屏必需（install 预缓存，保证离线可用 + 二次打开极速）
@@ -15,7 +15,7 @@ const CORE_ASSETS = [
   '/vendor/html2canvas.min.js',
   '/vendor/qrcode.min.js',
   '/audio/logo.jpg',
-  '/audio/score.svg',
+  '/audio/score.png',
   '/audio/yase.mp3',
   '/audio/wuzetian.mp3'
 ];

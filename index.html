@@ -169,11 +169,12 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
   }, 100);
 
   // L3：3 秒后 或 浏览器空闲时，才下载 25 张人格图（结果页才用得到，至少要过 15 题）
-  var IDS = ['aidawangzhe','bazhe','fengjinglongwang','guaidaojide','guashazhe',
-             'guyongzhe','hongbuff','hunzhe','huozhe','jiahao',
-             'jifenduobaoquan','kongdazhe','lanbuff','liulanggou','rongyaowangzhe',
-             'shizuoyongzhe','shufuzhe','sizhe','toutazhe','toutoufangpizhe',
-             'tuanduizhiguang','weimuzegang','wodizhe','zhener','zuzong'];
+  // 注意：部分文件为绕 CDN 缓存改名为 xxx2.png，和 personas.js 里的 img 路径保持一致
+  var IDS = ['aidawangzhe','bazhe','fengjinglongwang','guaidaojide2','guashazhe',
+             'guyongzhe','hongbuff','hunzhe','huozhe','jiahao2',
+             'jifenduobaoquan','kongdazhe','lanbuff2','liulanggou2','rongyaowangzhe',
+             'shizuoyongzhe','shufuzhe2','sizhe2','toutazhe','toutoufangpizhe2',
+             'tuanduizhiguang','weimuzegang','wodizhe','zhener','zuzong2'];
   function preloadPersonas(){
     IDS.forEach(function(id){
       if(window.__earlyImgCache[id]) return;

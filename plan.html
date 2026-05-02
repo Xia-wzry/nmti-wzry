@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NMTI 评价体系方案 · 可编辑版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans SC',sans-serif;background:#f5f5f3;color:#222;line-height:1.7;padding:20px}
+.wrap{max-width:860px;margin:0 auto}
+h1{font-size:22px;text-align:center;margin-bottom:6px}
+.sub{text-align:center;color:#999;font-size:13px;margin-bottom:30px}
+h2{font-size:17px;margin:28px 0 14px;padding-bottom:6px;border-bottom:2px solid #e0e0e0;color:#333}
+h3{font-size:14px;color:#666;margin:18px 0 8px}
+
+.dim-card{background:#fff;border-radius:12px;padding:16px 18px;margin-bottom:10px;border:1px solid #eee;display:flex;gap:14px;align-items:flex-start}
+.dim-id{font-size:13px;font-weight:700;color:#fff;background:#D4634A;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.dim-id.d2{background:#D4A03C}.dim-id.d3{background:#3B82C4}.dim-id.d4{background:#8B5CBA}.dim-id.d5{background:#5BA86C}.dim-id.d6{background:#E67E22}
+.dim-info{flex:1}
+.dim-name{font-size:15px;font-weight:700}
+.dim-desc{font-size:12px;color:#888;margin-top:2px}
+
+.result-card{background:#fff;border-radius:12px;padding:18px;margin-bottom:12px;border:1px solid #eee;position:relative}
+.result-card.special{border-color:#D4A03C;border-width:2px}
+.r-badge{position:absolute;top:12px;right:14px;font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
+.r-badge.core{background:rgba(212,99,74,.1);color:#D4634A}
+.r-badge.sp{background:rgba(212,160,60,.1);color:#D4A03C}
+.r-cond{font-size:11px;color:#aaa;margin-bottom:8px;font-family:monospace;background:#fafafa;padding:4px 8px;border-radius:6px}
+.r-name{font-size:16px;font-weight:700;margin-bottom:6px}
+.r-desc{font-size:13px;color:#555;line-height:1.8}
+
+textarea{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;font-family:inherit;line-height:1.7;color:#333;resize:vertical;min-height:40px;transition:border-color .2s}
+textarea:focus{outline:none;border-color:#D4634A}
+textarea.nm{min-height:36px;font-weight:700;font-size:15px}
+textarea.ds{min-height:80px}
+
+.note{font-size:12px;color:#bbb;margin-top:4px}
+.export-btn{display:block;margin:30px auto;padding:14px 40px;background:#D4634A;color:#fff;border:none;border-radius:30px;font-size:15px;font-weight:700;cursor:pointer}
+.export-btn:hover{background:#c0523d}
+
+.scoring{background:#fff;border-radius:12px;padding:16px 18px;margin-bottom:10px;border:1px solid #eee}
+.scoring-title{font-size:13px;font-weight:700;color:#444;margin-bottom:6px}
+.scoring-detail{font-size:12px;color:#888;line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎮 NMTI 评价体系方案</h1>
+<p class="sub">直接在文本框中修改名称和描述，改完点底部按钮导出</p>
+
+<!-- ===== 维度 ===== -->
+<h2>一、六个评判维度</h2>
+<p style="font-size:13px;color:#888;margin-bottom:14px">每个维度最终换算为0-10分等比例制。最高分维度为核心评价依据。</p>
+
+<div class="dim-card"><div class="dim-id">1</div><div class="dim-info"><div class="dim-name">自信心</div><div class="dim-desc">你觉得自己操作行不行？打分来源：判断1(天才)、判断3(技术登峰造极)、选择3(换分路show time)、选择6(奉献vs show time)、选择8(团战秀者)</div></div></div>
+
+<div class="dim-card"><div class="dim-id d2">2</div><div class="dim-info"><div class="dim-name">社交性</div><div class="dim-desc">你打游戏是冲人来的还是冲游戏？打分来源：选择1(五杀vs救朋友)、选择3(换分路配合度)、选择5(多选·团结友爱)、选择7(电影·甜蜜蜜)、选择9(单排vs开黑)</div></div></div>
+
+<div class="dim-card"><div class="dim-id d3">3</div><div class="dim-info"><div class="dim-name">胜负欲</div><div class="dim-desc">你在乎赢还是在乎开心？打分来源：判断4(训练营首发)、选择1(五杀丹砂)、选择4(五连跪反应)、选择6(奉献·看战绩)、选择7(电影·狂战士)、选择9(精挑队友/代练)</div></div></div>
+
+<div class="dim-card"><div class="dim-id d4">4</div><div class="dim-info"><div class="dim-name">团队性</div><div class="dim-desc">游戏内要团队赢还是自己秀？（≠社交开黑）打分来源：选择1(救朋友vs拿五杀)、选择3(配合换路)、选择6(无私奉献)、选择8(团战指挥vs闭麦solo)、选择9(开黑vs单排)</div></div></div>
+
+<div class="dim-card"><div class="dim-id d5">5</div><div class="dim-info"><div class="dim-name">王者了解度</div><div class="dim-desc">纯客观知识正确率。打分来源：判断2(马可语音答对+2)、判断5(亚瑟旋律答对+2)、选择2(武则天音频答对+2)。满分6分按比例换算为10分制。答错不扣分，选❓得0分。</div></div></div>
+
+<div class="dim-card"><div class="dim-id d6">6</div><div class="dim-info"><div class="dim-name">暴躁程度</div><div class="dim-desc">逆风/被坑时你的情绪反应。打分来源：选择4(钟馗骂人/文学创作)、选择6(躺平等赢)、选择5(多选·语言表达能力强)、判断3(天杀的队友)</div></div></div>
+
+<!-- ===== 计分说明 ===== -->
+<h2>二、计分逻辑</h2>
+<div class="scoring">
+<div class="scoring-title">核心规则</div>
+<div class="scoring-detail">
+1. 每道题的每个选项对1-3个维度加分（0-3分不等），各维度加分总池相当<br>
+2. 答完15题后，6个维度各自的原始分按各自的理论最高分等比例换算为 <b>0~10分</b><br>
+3. <b>最高分维度 = 核心标签</b>，结合次高分维度组合出具体人格名称<br>
+4. 如果最高分有并列 → 取排序靠前的维度<br>
+5. 特殊触发条件（见下方）优先于维度计算
+</div>
+</div>
+
+<!-- ===== 结果体系 ===== -->
+<h2>三、人格结果一览</h2>
+<p style="font-size:13px;color:#888;margin-bottom:14px">共16种结果：10种维度驱动 + 3种特殊触发 + 3种组合触发。可直接编辑名称和描述。</p>
+
+<h3>🔴 D1自信心为最高分时（3种，按次高分细分）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D1最高</span>
+<div class="r-cond">D1最高 + D5(了解度)也高 + D3(胜负欲)也高</div>
+<div class="r-name"><textarea class="nm" id="n1">等待俱乐部发掘的隐世天才</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d1">你对自己操作的信心已经爆棚，听起来已经手握KPL十连冠。但为什么你还不是职业呢？难道你的答案有水分……哦不我当然没有怀疑你，一定是俱乐部教练组还没找到你的联系方式吧！不过话说回来，能把知识题都答对还这么自信，你可能是真的有两把刷子——至少在答题这件事上是这样的。</textarea></div>
+</div>
+
+<div class="result-card">
+<span class="r-badge core">D1最高</span>
+<div class="r-cond">D1最高 + D3(胜负欲)低 → 自信但佛系</div>
+<div class="r-name"><textarea class="nm" id="n2">快乐的迷之自信玩家</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d2">你觉得自己很厉害，但你又不太在乎赢不赢——这种组合在峡谷里属于极度稀有物种。你是那种0-5了还在打"稳住我们能赢"的人，而且你是真的觉得能赢。你的快乐不来源于胜利，而来源于一种谜一样的自我肯定。你的队友可能很困惑，但不得不承认：和你打游戏压力确实不大。</textarea></div>
+</div>
+
+<div class="result-card">
+<span class="r-badge core">D1最高</span>
+<div class="r-cond">D1最高 + D4(团队性)低 → 自信+独狼</div>
+<div class="r-name"><textarea class="nm" id="n3">不需要队友的峡谷独行侠</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d3">你自信，你强，你不需要任何人。你的理想游戏模式是1v9，队友只是系统分配给你的NPC。你可能偷偷建过小号体验降维打击的快感，也可能在选人阶段看到队友亮出奇怪英雄时长叹一口气——"又要背了"。你的英雄池里大概率有李白韩信司马懿，因为这些英雄和你一样：生来就是一个人走的。</textarea></div>
+</div>
+
+<h3>🟡 D2社交性为最高分时（2种）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D2最高</span>
+<div class="r-cond">D2最高 + D3(胜负欲)低</div>
+<div class="r-name"><textarea class="nm" id="n4">打游戏只是为了和你们待在一起</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d4">你打开王者的前提条件从来不是"想上分"，而是"群里有人吗"。你可能连这赛季更新了什么都不知道，但你知道每个朋友的本命英雄和上线时间。对你来说王者不是一个MOBA游戏——它是一个带技能特效的语音聊天室。多年以后回忆起来，你记住的不是那些MVP，而是那些笑到肚子疼的开黑夜晚。你最害怕的不是输，是一个人打。</textarea></div>
+</div>
+
+<div class="result-card">
+<span class="r-badge core">D2最高</span>
+<div class="r-cond">D2最高 + D3(胜负欲)也高</div>
+<div class="r-name"><textarea class="nm" id="n5">开黑群里的首席组局大师</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d5">你爱社交也爱赢——这两件事在你身上完美统一了。你是五黑群的发起人、BP阶段的总指挥、赛后复盘的主持人。你组局的速度比外卖下单还快，你挑队友的眼光比HR还毒。你可能同时管理着三个开黑群，并且清楚记得每个人的段位、擅长位置和上线规律。不是你离不开朋友，是朋友离不开你——因为没你组局他们根本凑不齐人。</textarea></div>
+</div>
+
+<h3>🔵 D3胜负欲为最高分时（2种）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D3最高</span>
+<div class="r-cond">D3最高 + D4(团队性)高</div>
+<div class="r-name"><textarea class="nm" id="n6">把排位当高考的峡谷卷王</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d6">你打排位的认真程度让人怀疑你是不是拿了工资。BP阶段你已经在脑子里模拟了三套阵容，出门你就算好了对面打野的路线。你不能理解为什么有人排位还能边打边聊天——这是考试啊朋友们！你的口头禅是"能不能认真点"，你的噩梦是队友说"我拿这个练练手"。你至少有一次在凌晨三点因为差一颗星上段而继续排。恭喜，你是峡谷里最接近职业选手的人——如果不算操作的话。</textarea></div>
+</div>
+
+<div class="result-card">
+<span class="r-badge core">D3最高</span>
+<div class="r-cond">D3最高 + D4(团队性)低 → 想赢但只想自己赢</div>
+<div class="r-name"><textarea class="nm" id="n7">全世界都欠我一个MVP的悲情英雄</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d7">你极度渴望胜利，但你更渴望的是——胜利是因为你。你是那种队友拿了五杀你会说"那波是我开的团"的人。你的战绩截图只截MVP的那几张，连败的记录你选择性失忆。你可能说过"这把要不是我在，早输了"——问题是……你好像每把都这么说。你和胜利之间只差一个听话的队友，但这个队友好像永远不会出现。</textarea></div>
+</div>
+
+<h3>🟣 D4团队性为最高分时（2种）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D4最高</span>
+<div class="r-cond">D4最高 + D1(自信)低 → 无私的团队型</div>
+<div class="r-name"><textarea class="nm" id="n8">被队友亏欠了一个赛季的峡谷工具人</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d8">永远补位，永远辅助，永远把蓝buff让给中路。你在游戏里的性格和现实中一样——不争不抢，闷头干活。队友说"来个辅助"的时候你已经默默选好了蔡文姬。你的战绩里助攻数永远比击杀数高，你的游戏体验取决于队友的良心。你可能是峡谷里信誉分最高的人，也可能是最委屈的人。但你知道吗？每个五黑群里最不可或缺的就是你这样的人。</textarea></div>
+</div>
+
+<div class="result-card">
+<span class="r-badge core">D4最高</span>
+<div class="r-cond">D4最高 + D1(自信)也高 → 能C也能辅的全能型</div>
+<div class="r-name"><textarea class="nm" id="n9">峡谷里人人都想要的神队友</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d9">你有实力也有格局。需要你C的时候你能carry，需要你补位的时候你也不含糊。你是那种BP阶段说"你们先选，剩什么我玩什么"然后不管拿到什么都能打出水平的人。你的好友列表里全是"下次一定叫你"的备注。你是开黑时所有人都想抢的队友——不是因为你最能打，而是因为有你在，大家都觉得这把稳了。</textarea></div>
+</div>
+
+<h3>🟢 D5王者了解度为最高分时（1种）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D5最高</span>
+<div class="r-cond">D5最高（知识题基本全对）</div>
+<div class="r-name"><textarea class="nm" id="n10">你确定你不是王者荣耀的员工？</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d10">老亚瑟唱歌的调你听得出来，武则天练声的音高你分得清，马可波罗的台词你倒背如流。你是朋友圈里的王者百科全书——谁问"这个英雄怎么出装"都来找你。你对这个游戏的了解程度已经超越了普通玩家的范畴，建议直接投简历去天美工作室。不过说真的，能把这些题都答对的人不到5%，你是真正的老农民。</textarea></div>
+</div>
+
+<h3>🟠 D6暴躁程度为最高分时（1种）</h3>
+
+<div class="result-card">
+<span class="r-badge core">D6最高</span>
+<div class="r-cond">D6最高</div>
+<div class="r-name"><textarea class="nm" id="n11">峡谷语言艺术家</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d11">你最大的武器不是操作，是嘴。逆风的时候你的主观能动性自动引导你打开麦克风进行文学创作，顺风的时候你的解说比KPL还精彩。队友送了人头你能用三种语言表达不满，对面嘲讽了你能用五种方式反击。你可能因为"语言表达能力过于突出"而被系统温馨提示过——但你觉得那是系统不懂欣赏文学。你和钟馗是灵魂伴侣："垃圾，就该待在垃圾桶里"说的就是你对面的人。</textarea></div>
+</div>
+
+<h3>⭐ 特殊触发结果（优先于维度判定）</h3>
+
+<div class="result-card special">
+<span class="r-badge sp">特殊触发</span>
+<div class="r-cond">触发条件：所有题目选择的都是抽象/搞怪向选项（如❓、朵莉亚变声期、迷路来晚了、程咬金好舒服、躺平等赢等）</div>
+<div class="r-name"><textarea class="nm" id="n12">别急！还在搞抽象呢</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d12">一个爱玩梗、爱整活的峡谷乐子人。你做这个测试的目的不是为了测结果，而是为了看哪个选项最好笑。你的相册里一定有梦泪表情包，你的收藏夹里一定有"王者荣耀名场面合集"，你发的每条消息都自带抽象光环。你可能不是最能打的那个人，但你一定是最能逗大家笑的那个。你的存在证明了一件事：王者荣耀除了上分，还可以是一门行为艺术。</textarea></div>
+</div>
+
+<div class="result-card special">
+<span class="r-badge sp">特殊触发</span>
+<div class="r-cond">触发条件：所有维度得分都在4-6分之间，没有任何突出维度</div>
+<div class="r-name"><textarea class="nm" id="n13">薛定谔的王者玩家</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d13">其实你根本就没怎么玩王者吧！你的答案反复横跳，一会儿像个卷王一会儿像个佛系玩家，一会儿很自信一会儿又很谦虚。系统分析了半天得出一个结论：分析不了。你可能每天都是不同的人——周一是卷王、周三是乐子人、周五是社交花、周末是挂机选手。你是峡谷里最不可预测的存在，连AI都拿你没办法。某种意义上……这也是一种天赋？</textarea></div>
+</div>
+
+<div class="result-card special">
+<span class="r-badge sp">特殊触发</span>
+<div class="r-cond">触发条件：D5(了解度)极低（知识题全错）+ 其他维度也偏低</div>
+<div class="r-name"><textarea class="nm" id="n14">误入峡谷的无辜路人</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d14">根据你的答题数据，系统有充分理由怀疑你……可能不太玩王者？知识题全靠蒙，英雄语音一个没听过，问你排位什么感觉你说"排位是什么"。但是！你居然做完了15道题！这说明你至少有一颗好奇心（或者是有个朋友拿刀逼着你做的）。没关系的，欢迎来到峡谷，你的第一个免费英雄是亚瑟——就是那个唱歌的。</textarea></div>
+</div>
+
+<h3>🔥 组合触发结果</h3>
+
+<div class="result-card special">
+<span class="r-badge sp">组合触发</span>
+<div class="r-cond">D2(社交)高 + D3(胜负欲)高 + D4(团队性)高 + D6(暴躁)高</div>
+<div class="r-name"><textarea class="nm" id="n15">牢玩家</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d15">社交拉满、胜负欲爆表、团队精神在线、情绪还特别激烈——恭喜你解锁了"牢玩家"成就。你是那种拉着全部朋友打五排、输了疯狂复盘、赢了疯狂庆祝、打团的时候嘴比手还快的人。你的开黑群聊记录能出一本《峡谷战争与和平》。你不是在打游戏，你是在参加一场带有社交属性的竞技真人秀。你的朋友又爱你又怕你——爱你是因为有你在就不无聊，怕你是因为输了你真的会生气。</textarea></div>
+</div>
+
+<div class="result-card special">
+<span class="r-badge sp">组合触发</span>
+<div class="r-cond">D1(自信)高 + D6(暴躁)高 + D4(团队性)低</div>
+<div class="r-name"><textarea class="nm" id="n16">队友都欠你一句对不起的受害者</textarea></div>
+<div class="r-desc"><textarea class="ds" id="d16">你自信、你暴躁、你还不爱配合——三位一体造就了峡谷最经典的"受害者人格"。每一把输了都是队友的问题，每一次死亡都是辅助不来的锅。你的聊天记录里至少有十条"这个游戏有没有人管"，你的朋友圈删过至少三条关于戒游的文字。但你第二天还是会打开王者——因为你坚信：只要系统不再针对你，你就是这条街最靓的仔。</textarea></div>
+</div>
+
+<!-- ===== 导出 ===== -->
+<br>
+<button class="export-btn" onclick="exportData()">📋 导出修改后的方案</button>
+<pre id="output" style="display:none;background:#fff;padding:20px;border-radius:12px;margin-top:20px;font-size:12px;white-space:pre-wrap;border:1px solid #eee"></pre>
+
+</div>
+<script>
+function exportData(){
+  var ids=['n1','d1','n2','d2','n3','d3','n4','d4','n5','d5','n6','d6','n7','d7','n8','d8','n9','d9','n10','d10','n11','d11','n12','d12','n13','d13','n14','d14','n15','d15','n16','d16'];
+  var result = '=== NMTI 评价体系·修改版 ===\n\n';
+  for(var i=0;i<ids.length;i+=2){
+    var name=document.getElementById(ids[i]).value;
+    var desc=document.getElementById(ids[i+1]).value;
+    var num=Math.floor(i/2)+1;
+    result+='【结果'+num+'】'+name+'\n'+desc+'\n\n';
+  }
+  var el=document.getElementById('output');
+  el.textContent=result;
+  el.style.display='block';
+  el.scrollIntoView({behavior:'smooth'});
+  // 复制到剪贴板
+  navigator.clipboard.writeText(result).then(function(){alert('已复制到剪贴板！')}).catch(function(){});
+}
+</script>
+</body>
+</html>

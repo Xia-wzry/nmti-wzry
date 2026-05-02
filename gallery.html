@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMTI · 人格图总览</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:#FAF7F2;color:#2D2D2D;padding:20px;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto}
+h1{font-size:22px;font-weight:900;margin-bottom:8px;letter-spacing:1px}
+.sub{color:#999;font-size:13px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px}
+.cell{background:#fff;border-radius:14px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid #EBEBEB;transition:all .2s;cursor:pointer;position:relative}
+.cell:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(212,99,74,.15);border-color:rgba(212,99,74,.3)}
+.cell.flagged{background:#FFF5F0;border-color:#D4634A;border-width:2px}
+.cell .idx{position:absolute;top:6px;left:8px;font-size:10px;color:#ccc;font-weight:700;font-family:monospace}
+.cell .flag-btn{position:absolute;top:6px;right:8px;width:24px;height:24px;border-radius:50%;background:#f5f5f5;border:none;cursor:pointer;font-size:14px;color:#ccc;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.cell .flag-btn:hover{background:#FFE5DC;color:#D4634A}
+.cell.flagged .flag-btn{background:#D4634A;color:#fff}
+.img-box{width:100%;height:180px;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center, #FFF6EE 0%, #FAF7F2 70%);border-radius:10px;margin-bottom:10px;overflow:hidden;padding:8px}
+.img-box img{max-width:100%;max-height:100%;object-fit:contain;filter:drop-shadow(0 4px 8px rgba(80,30,20,.15))}
+.name{text-align:center;font-size:15px;font-weight:700;color:#2D2D2D;margin-bottom:4px;letter-spacing:1px}
+.type{text-align:center;font-size:11px;color:#999;letter-spacing:.5px}
+.id{text-align:center;font-size:10px;color:#bbb;font-family:monospace;margin-top:2px}
+
+.toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.btn{background:#fff;border:1.5px solid #EBEBEB;color:#666;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:#D4634A;color:#D4634A}
+.btn.primary{background:#D4634A;color:#fff;border-color:#D4634A}
+
+#summary{background:#fff;border-radius:14px;padding:16px 18px;margin-bottom:20px;border:1px solid #EBEBEB;font-size:13px;color:#666;display:none}
+#summary.on{display:block}
+#summary h3{font-size:14px;color:#D4634A;margin-bottom:8px}
+#summary ul{padding-left:20px;line-height:1.8}
+#summary .hint{font-size:12px;color:#999;margin-top:10px}
+.copy-text{background:#FAF7F2;padding:10px 12px;border-radius:8px;font-family:monospace;font-size:12px;margin-top:10px;border:1px dashed #ddd;user-select:all;cursor:text}
+
+.type-op{color:#D4634A}
+.type-win{color:#C8975A}
+.type-rage{color:#B14A33}
+.type-team{color:#3B82C4}
+.type-social{color:#8B5CBA}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎨 NMTI 人格图总览</h1>
+<div class="sub">共 25 个人格，点击右上角 🚩 标记有问题的图，方便告诉我修改</div>
+
+<div class="toolbar">
+  <button class="btn primary" onclick="showSummary()">📋 生成问题清单</button>
+  <button class="btn" onclick="clearAll()">清除标记</button>
+  <span style="color:#999;font-size:12px;margin-left:auto"><span id="flagCount">0</span> / 25 已标记</span>
+</div>
+
+<div id="summary"></div>
+
+<div class="grid" id="grid"></div>
+
+</div>
+
+<script src="personas.js?v=20260502b"></script>
+<script>
+var TYPE_CN = {op:'操作',win:'胜负',rage:'暴躁',team:'团队',social:'社交'};
+var flagged = {};
+
+function render(){
+  var g = document.getElementById('grid');
+  var html = '';
+  var idx = 1;
+  Object.keys(window.PERSONAS).forEach(function(id){
+    var p = window.PERSONAS[id];
+    var isFlag = flagged[id] ? ' flagged':'';
+    html += '<div class="cell'+isFlag+'" data-id="'+id+'" onclick="toggle(\''+id+'\')">' +
+      '<span class="idx">'+String(idx).padStart(2,'0')+'</span>' +
+      '<button class="flag-btn" onclick="event.stopPropagation();toggle(\''+id+'\')">🚩</button>' +
+      '<div class="img-box"><img src="personas/'+id+'.png?v=20260502" alt="'+p.name+'" loading="lazy"></div>' +
+      '<div class="name">'+p.name+'</div>' +
+      '<div class="type type-'+p.type+'">'+TYPE_CN[p.type]+'主导</div>' +
+      '<div class="id">'+id+'.png</div>' +
+      '</div>';
+    idx++;
+  });
+  g.innerHTML = html;
+  updateCount();
+}
+
+function toggle(id){
+  flagged[id] = !flagged[id];
+  render();
+}
+
+function clearAll(){
+  flagged = {};
+  render();
+  document.getElementById('summary').classList.remove('on');
+}
+
+function updateCount(){
+  var c = Object.keys(flagged).filter(function(k){return flagged[k]}).length;
+  document.getElementById('flagCount').textContent = c;
+}
+
+function showSummary(){
+  var ids = Object.keys(flagged).filter(function(k){return flagged[k]});
+  if(ids.length===0){
+    alert('还没有标记任何人格');
+    return;
+  }
+  var names = ids.map(function(id){return window.PERSONAS[id].name});
+  var html = '<h3>🚩 有问题的人格（共 '+ids.length+' 个）</h3>' +
+    '<ul>' + names.map(function(n){return '<li>'+n+'</li>'}).join('') + '</ul>' +
+    '<div class="hint">把下面这串复制给我，我直接替换/修复：</div>' +
+    '<div class="copy-text">有问题的图：'+names.join('、')+'</div>';
+  var s = document.getElementById('summary');
+  s.innerHTML = html;
+  s.classList.add('on');
+  s.scrollIntoView({behavior:'smooth'});
+}
+
+render();
+</script>
+</body>
+</html>

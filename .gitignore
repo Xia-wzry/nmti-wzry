@@ -1,0 +1,15 @@
+# macOS
+.DS_Store
+
+# WorkBuddy 工作目录（IDE 私有数据）
+.workbuddy/
+
+# 工作中的中间产物（不需要发布）
+output/
+generated-images/
+heroes/
+
+# 临时/编辑器文件
+*.swp
+*.log
+node_modules/

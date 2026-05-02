@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NMTI · 默认路径设置器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Noto Sans SC',sans-serif;background:#f5f5f3;color:#222;line-height:1.7;padding:20px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:22px;text-align:center;margin-bottom:4px}
+.sub{text-align:center;color:#999;font-size:13px;margin-bottom:24px}
+h2{font-size:17px;margin:24px 0 12px;padding-bottom:6px;border-bottom:2px solid #e0e0e0}
+
+.panel{background:#fff;border-radius:12px;padding:18px;margin-bottom:16px;border:1px solid #eee}
+.panel-title{font-size:14px;font-weight:700;color:#333;margin-bottom:12px}
+
+.rule{background:#fafafa;border-radius:10px;padding:14px;margin-bottom:10px;border:1px solid #eee;position:relative}
+.rule-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rule-num{font-size:12px;font-weight:700;color:#D4634A;background:rgba(212,99,74,.1);padding:3px 10px;border-radius:10px}
+.rule-del{background:#fff;border:1px solid #ddd;color:#999;padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer}
+.rule-del:hover{border-color:#E74C3C;color:#E74C3C}
+
+.rule-section{margin-bottom:10px;font-size:12px}
+.rule-section-label{color:#888;margin-bottom:4px;font-weight:500}
+.rule-section select,.rule-section input,.rule-section textarea{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;font-family:inherit;background:#fff}
+.rule-section textarea{min-height:60px;resize:vertical;line-height:1.7}
+.rule-section select:focus,.rule-section input:focus,.rule-section textarea:focus{outline:none;border-color:#D4634A}
+
+.conditions{background:#fff;border-radius:6px;padding:10px;border:1px dashed #ccc}
+.cond-item{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.cond-item select{flex:1;padding:6px 8px;font-size:12px;border:1px solid #ddd;border-radius:5px;background:#fff}
+.cond-item .x{background:none;border:none;color:#999;cursor:pointer;font-size:16px;padding:4px}
+.cond-item .x:hover{color:#E74C3C}
+.add-cond{background:none;border:1px dashed #D4634A;color:#D4634A;padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;margin-top:4px;width:100%}
+.add-cond:hover{background:rgba(212,99,74,.05)}
+
+.cond-logic{display:flex;gap:8px;align-items:center;margin-bottom:8px;font-size:12px;color:#666}
+.cond-logic select{padding:4px 8px;font-size:12px;border:1px solid #ddd;border-radius:5px;background:#fff}
+
+.add-rule{display:block;margin:20px auto;background:linear-gradient(135deg,#D4634A,#E07B5F);color:#fff;border:none;padding:12px 36px;border-radius:24px;font-size:14px;font-weight:700;cursor:pointer}
+.add-rule:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(212,99,74,.3)}
+
+.output-area{background:#282c34;color:#abb2bf;border-radius:12px;padding:18px;margin-top:14px;font-family:monospace;font-size:12px;line-height:1.7;white-space:pre-wrap;word-break:break-all;display:none}
+.output-area.show{display:block}
+
+.export-btn{display:block;margin:30px auto 10px;background:#333;color:#fff;border:none;padding:14px 40px;border-radius:24px;font-size:15px;font-weight:700;cursor:pointer}
+.export-btn:hover{background:#111}
+
+.intro{background:#fff;border-radius:12px;padding:18px;margin-bottom:20px;border:1px solid #eee;font-size:13px;color:#666;line-height:1.9}
+.intro b{color:#D4634A}
+.intro ol{padding-left:22px;margin:8px 0}
+
+.empty{text-align:center;color:#bbb;padding:30px;font-size:13px}
+
+.preset-btns{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.preset-btn{background:#fff;border:1px dashed #D4A03C;color:#C8975A;padding:6px 14px;border-radius:16px;font-size:12px;cursor:pointer}
+.preset-btn:hover{background:rgba(212,160,60,.08)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🎯 NMTI 默认路径设置器</h1>
+<p class="sub">设置特定选项组合 → 强制导向指定结果，优先级高于评分系统</p>
+
+<div class="intro">
+<b>使用方法：</b>
+<ol>
+<li>点击"加载已有规则"先载入你之前保存的规则（如果有）</li>
+<li>点击"新增一条规则" → 设置触发条件 + 对应结果</li>
+<li>条件支持 <b>"和"</b>（全部满足）或 <b>"或"</b>（任一满足）</li>
+<li>一条规则可设置多个条件，如 "第1题选✅ 且 第3题选✅ 且 第5题选❓"</li>
+<li>完成后点击底部"导出规则"，把生成的代码发给我，我直接集成到测试里</li>
+</ol>
+</div>
+
+<!-- 快速模板 -->
+<div class="panel">
+<div class="panel-title">💡 快速模板（点击即可载入示例规则）</div>
+<div class="preset-btns">
+<button class="preset-btn" onclick="loadPreset('allcorrect')">📚 全部答对知识题→员工</button>
+<button class="preset-btn" onclick="loadPreset('allabs')">🎭 全抽象向→乐子人</button>
+<button class="preset-btn" onclick="loadPreset('allconf')">💪 所有自信项→隐世天才</button>
+<button class="preset-btn" onclick="loadPreset('allteam')">🤝 所有团队项→神队友</button>
+</div>
+</div>
+
+<!-- 规则列表 -->
+<div id="rulesList"></div>
+
+<button class="add-rule" onclick="addRule()">+ 新增一条规则</button>
+
+<!-- 导入/导出 -->
+<div class="panel">
+<div class="panel-title">🔧 导入 / 导出</div>
+<textarea id="importArea" placeholder="粘贴之前导出的JSON规则在这里，然后点击下方'导入规则'按钮" style="width:100%;min-height:80px;border:1px solid #ddd;border-radius:6px;padding:10px;font-family:monospace;font-size:12px"></textarea>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button style="flex:1;background:#fff;border:1px solid #D4634A;color:#D4634A;padding:10px;border-radius:8px;font-weight:700;cursor:pointer" onclick="importRules()">📥 导入规则</button>
+<button style="flex:1;background:#D4634A;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer" onclick="exportRules()">📤 导出规则</button>
+</div>
+</div>
+
+<div id="output" class="output-area"></div>
+
+</div>
+
+<script>
+// === 题目选项数据（与index.html同步） ===
+var QDATA=[
+{n:'1.判断题 · 我好像是玩王者荣耀的天才',opts:['✅ 对','❌ 错']},
+{n:'2.判断题 · 马可波罗语音（答对=❌）',opts:['✅ 对','❌ 错']},
+{n:'3.判断题 · 技术登峰造极（天杀的队友）',opts:['✅ 对','❌ 错']},
+{n:'4.判断题 · 只有体验过的英雄才配首发',opts:['✅ 对','❌ 错']},
+{n:'5.判断题 · 亚瑟唱歌旋律（答对=✅）',opts:['✅ 对','❌ 错','❓ 我不知道']},
+{n:'6.选择题 · 朋友被包围vs拿五杀',opts:['A.丹砂！','B.迷路来晚了','C.和朋友一起阵亡','D.忠义刻心中']},
+{n:'7.选择题 · 武则天音频（答对=A）',opts:['A.武则天练声','B.朵莉亚变声期','C.司空震坠机','D.芈月吟唱']},
+{n:'8.选择题 · 朋友要你换分路',opts:['A.英雄海show time','B.女王拒绝','C.掏出相同英雄','D.你一声要我便玩']},
+{n:'9.选择题 · 五连跪发语音',opts:['A.孙策·我的狗','B.钟馗·垃圾','C.程咬金·好舒服','D.打麦克风文学创作']},
+{n:'10.多选题 · 爱玩王者的优点',opts:['A.精神稳定','B.团结友爱','C.语言表达能力强','D.善于发明创造','E.逻辑思维清晰','F.动手能力强']},
+{n:'11.选择题 · 什么时候愿意奉献',opts:['A.队友战绩耀眼','B.队友哭求','C.团队型面向胜利','D.show time拒绝奉献']},
+{n:'12.选择题 · 拍电影片名',opts:['A.狂战士斗兽场','B.活着','C.人在囧途','D.速度与激情','E.甜蜜蜜']},
+{n:'13.选择题 · 团战你的状态',opts:['A.指挥者','B.秀者闭麦','C.死者VIP观战','D.是秀是送上天定夺']},
+{n:'14.选择题 · 打开排位的状态',opts:['A.单排强者孤独','B.开黑朋友上线','C.精挑队友要胜利','D.单排双排都行']},
+{n:'15.选择题 · 时光机做什么',opts:['A.穿越五年前','B.穿越五年后','C.穿越十年前研发','D.隐藏·小妲己失望']}
+];
+
+// 16种结果（与index.html同步）
+var RESULTS=[
+'等待俱乐部发掘的隐世天才',
+'闪烁着圣母光芒的团队之光',
+'不需要队友的峡谷独行侠',
+'一只团宠和平鸽',
+'闪耀·首席组局大师',
+'把排位当高考的峡谷卷王',
+'全世界都欠我一个MVP的愤慨少年',
+'被队友亏欠了一年又一年的峡谷工具人',
+'峡谷里人人都想要的神队友',
+'你确定你不是王者荣耀的员工？',
+'峡谷语言艺术家',
+'别急！还在搞抽象呢',
+'薛定谔的王者玩家',
+'误入峡谷的无辜路人',
+'牢玩家',
+'队友都欠你一句对不起的受害者（？）'
+];
+
+var rules=[];
+
+// 加载localStorage
+try{var saved=localStorage.getItem('nmti_rules');if(saved)rules=JSON.parse(saved);}catch(e){}
+
+function save(){localStorage.setItem('nmti_rules',JSON.stringify(rules));}
+
+function render(){
+  var list=document.getElementById('rulesList');
+  if(rules.length===0){list.innerHTML='<div class="empty">还没有任何规则，点击下方按钮新增</div>';return;}
+  var html='';
+  rules.forEach(function(r,ri){
+    var condsHtml='<div class="cond-logic"><span>条件满足方式：</span><select onchange="updLogic('+ri+',this.value)"><option value="and"'+(r.logic==='and'?' selected':'')+'>和（AND·全部满足）</option><option value="or"'+(r.logic==='or'?' selected':'')+'>或（OR·任一满足）</option></select></div>';
+    condsHtml+='<div class="conditions">';
+    r.conds.forEach(function(c,ci){
+      var q=QDATA[c.qIdx];
+      var optsHtml='';
+      if(q){q.opts.forEach(function(o,oi){optsHtml+='<option value="'+oi+'"'+(c.optIdx===oi?' selected':'')+'>'+o+'</option>';});}
+      var qOpts='';
+      QDATA.forEach(function(qq,qi){qOpts+='<option value="'+qi+'"'+(c.qIdx===qi?' selected':'')+'>'+qq.n+'</option>';});
+      condsHtml+='<div class="cond-item"><select onchange="updQ('+ri+','+ci+',this.value)">'+qOpts+'</select><select onchange="updOpt('+ri+','+ci+',this.value)">'+optsHtml+'</select><button class="x" onclick="delCond('+ri+','+ci+')">×</button></div>';
+    });
+    condsHtml+='<button class="add-cond" onclick="addCond('+ri+')">+ 添加条件</button></div>';
+
+    var resOpts='';
+    RESULTS.forEach(function(rs,rsi){resOpts+='<option value="'+rsi+'"'+(r.resultIdx===rsi?' selected':'')+'>'+rs+'</option>';});
+    resOpts+='<option value="-1"'+(r.resultIdx===-1?' selected':'')+'>── 自定义新结果 ──</option>';
+
+    html+='<div class="rule">'
+      +'<div class="rule-head"><span class="rule-num">规则 #'+(ri+1)+'</span><button class="rule-del" onclick="delRule('+ri+')">删除</button></div>'
+      +'<div class="rule-section"><div class="rule-section-label">📋 规则名称（仅便于识别）</div><input type="text" placeholder="例如：全部答对→员工" value="'+(r.name||'')+'" onchange="updName('+ri+',this.value)"></div>'
+      +'<div class="rule-section"><div class="rule-section-label">🎯 触发条件</div>'+condsHtml+'</div>'
+      +'<div class="rule-section"><div class="rule-section-label">🏆 强制跳转到的结果</div><select onchange="updRes('+ri+',this.value)">'+resOpts+'</select></div>';
+    if(r.resultIdx===-1){
+      html+='<div class="rule-section"><div class="rule-section-label">✏️ 自定义结果名称</div><input type="text" placeholder="输入结果名称" value="'+(r.customName||'')+'" onchange="updCustName('+ri+',this.value)"></div>'
+        +'<div class="rule-section"><div class="rule-section-label">📝 自定义结果描述</div><textarea placeholder="输入结果描述" onchange="updCustDesc('+ri+',this.value)">'+(r.customDesc||'')+'</textarea></div>';
+    }
+    html+='</div>';
+  });
+  list.innerHTML=html;
+  save();
+}
+
+function addRule(){rules.push({name:'',logic:'and',conds:[{qIdx:0,optIdx:0}],resultIdx:0,customName:'',customDesc:''});render();}
+function delRule(i){if(confirm('确定删除这条规则？')){rules.splice(i,1);render();}}
+function updName(i,v){rules[i].name=v;save();}
+function updLogic(i,v){rules[i].logic=v;save();}
+function updRes(i,v){rules[i].resultIdx=parseInt(v);render();}
+function updCustName(i,v){rules[i].customName=v;save();}
+function updCustDesc(i,v){rules[i].customDesc=v;save();}
+function addCond(i){rules[i].conds.push({qIdx:0,optIdx:0});render();}
+function delCond(i,j){if(rules[i].conds.length>1){rules[i].conds.splice(j,1);render();}else{alert('至少要保留一个条件');}}
+function updQ(i,j,v){rules[i].conds[j].qIdx=parseInt(v);rules[i].conds[j].optIdx=0;render();}
+function updOpt(i,j,v){rules[i].conds[j].optIdx=parseInt(v);save();}
+
+function exportRules(){
+  var out=document.getElementById('output');
+  var json=JSON.stringify(rules,null,2);
+  out.textContent='// 共 '+rules.length+' 条规则\n\n'+json+'\n\n=== 可读摘要 ===\n\n';
+  rules.forEach(function(r,i){
+    out.textContent+='【规则'+(i+1)+'】'+(r.name||'(未命名)')+'\n';
+    out.textContent+='条件（'+(r.logic==='and'?'全部满足':'任一满足')+'）：\n';
+    r.conds.forEach(function(c){
+      var q=QDATA[c.qIdx];
+      out.textContent+='  - '+q.n+' → 选 '+q.opts[c.optIdx]+'\n';
+    });
+    if(r.resultIdx>=0){
+      out.textContent+='导向结果：「'+RESULTS[r.resultIdx]+'」\n\n';
+    }else{
+      out.textContent+='导向自定义结果：「'+(r.customName||'(未命名)')+'」\n  描述：'+(r.customDesc||'(空)')+'\n\n';
+    }
+  });
+  out.classList.add('show');
+  out.scrollIntoView({behavior:'smooth'});
+  navigator.clipboard.writeText(out.textContent).then(function(){alert('已复制到剪贴板！把这段内容发给我就可以了');}).catch(function(){});
+}
+
+function importRules(){
+  var text=document.getElementById('importArea').value.trim();
+  if(!text){alert('请先粘贴规则内容');return;}
+  try{
+    // 尝试提取JSON部分
+    var jsonStart=text.indexOf('[');var jsonEnd=text.lastIndexOf(']');
+    if(jsonStart>=0&&jsonEnd>=0)text=text.substring(jsonStart,jsonEnd+1);
+    var parsed=JSON.parse(text);
+    if(Array.isArray(parsed)){rules=parsed;render();alert('导入成功！共 '+rules.length+' 条规则');}
+    else alert('格式错误，不是有效的规则数组');
+  }catch(e){alert('解析失败：'+e.message);}
+}
+
+function loadPreset(type){
+  var r={name:'',logic:'and',conds:[],resultIdx:0,customName:'',customDesc:''};
+  if(type==='allcorrect'){
+    r.name='全部答对知识题→员工';
+    r.conds=[{qIdx:1,optIdx:1},{qIdx:4,optIdx:0},{qIdx:6,optIdx:0}];
+    r.resultIdx=9; // 你确定你不是王者荣耀的员工
+  }else if(type==='allabs'){
+    r.name='全选抽象向→乐子人';
+    r.logic='and';
+    r.conds=[{qIdx:4,optIdx:2},{qIdx:6,optIdx:1},{qIdx:5,optIdx:1},{qIdx:8,optIdx:2}];
+    r.resultIdx=11;
+  }else if(type==='allconf'){
+    r.name='所有自信项→隐世天才';
+    r.conds=[{qIdx:0,optIdx:0},{qIdx:2,optIdx:0},{qIdx:7,optIdx:0},{qIdx:10,optIdx:3},{qIdx:13,optIdx:0}];
+    r.resultIdx=0;
+  }else if(type==='allteam'){
+    r.name='所有团队项→神队友';
+    r.conds=[{qIdx:5,optIdx:3},{qIdx:7,optIdx:3},{qIdx:10,optIdx:2},{qIdx:12,optIdx:0}];
+    r.resultIdx=8;
+  }
+  rules.push(r);render();
+  alert('已添加模板规则，你可以在下方调整');
+}
+
+render();
+</script>
+</body>
+</html>

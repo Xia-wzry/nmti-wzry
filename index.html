@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>NMTI · 农民TI</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--txt);min-height:100%;overflow-x:hidden}
+.ctn{max-width:420px;margin:0 auto;padding:20px 20px 90px;height:100vh;height:100dvh;display:flex;flex-direction:column;overflow-x:hidden}
+
+/* 起始页 */
+#start{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;text-align:center;animation:fi .8s}
+.si{font-size:52px;margin-bottom:18px}
+.st{font-size:24px;font-weight:900;color:var(--txt);margin-bottom:8px;letter-spacing:2px}
+.ss{font-size:13px;color:var(--t3);margin-bottom:36px;line-height:1.8}
+.bs{background:linear-gradient(135deg,var(--warm),#E07B5F);color:#fff;border:none;padding:14px 48px;border-radius:50px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:3px;box-shadow:0 4px 20px rgba(212,99,74,.2)}
+
+.qs{display:none;flex:1;flex-direction:column;animation:si .3s}.qs.on{display:flex}
+@keyframes si{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+
+.pb{display:flex;align-items:center;gap:10px;margin-bottom:0;flex-shrink:0}
+.pt{flex:1;height:3px;background:var(--ln);border-radius:2px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,var(--warm),var(--gold));border-radius:2px;transition:width .5s}
+.pn{font-size:12px;color:var(--t3);min-width:34px;text-align:right}
+
+.qm{flex:1;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:8px 0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.qinner{margin:auto 0;width:100%;text-align:center}
+
+.qtag{display:inline-block;padding:4px 12px;border-radius:10px;font-size:11px;font-weight:600;margin-bottom:16px;letter-spacing:1px}
+.tj{background:rgba(212,99,74,.08);color:var(--warm)}.tc{background:rgba(59,130,196,.08);color:#3B82C4}.tm{background:rgba(139,92,186,.08);color:#8B5CBA}
+
+.qt{font-size:19px;font-weight:300;line-height:1.9;color:var(--txt);margin-bottom:24px;text-align:center;padding:0 4px}
+
+.scr{display:block;margin:0 auto 16px;max-width:100%}
+.aw{text-align:center;margin-bottom:16px}
+.ab{display:inline-flex;align-items:center;gap:6px;background:var(--gl);border:1px solid var(--gb);color:var(--gold);padding:7px 16px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .3s}
+.ab:hover{background:rgba(200,151,90,.16)}
+
+.ops{display:flex;flex-direction:column;gap:9px;width:100%}
+.ob{background:var(--card);border:1.5px solid var(--ln);border-radius:14px;padding:14px 16px;font-size:15px;font-weight:400;color:var(--txt);cursor:pointer;transition:all .2s;text-align:left;line-height:1.6;position:relative;font-family:inherit}
+.ob:hover{border-color:var(--wb);background:var(--wl)}
+.ob.sl{border-color:var(--warm);background:var(--wl);color:var(--warm);font-weight:500}
+.ob.sl::after{content:'\2713';position:absolute;right:13px;top:50%;transform:translateY(-50%);color:var(--warm);font-size:12px}
+
+.jo{flex-direction:row;justify-content:center;gap:18px}
+.jb{width:68px;height:68px;border-radius:50%;background:var(--card);border:2px solid var(--ln);display:flex;align-items:center;justify-content:center;font-size:30px;cursor:pointer;transition:all .25s;font-family:inherit}
+.jb:hover{border-color:var(--wb);background:var(--wl);transform:scale(1.06)}
+.jb.sl{border-color:var(--warm);background:var(--wl);box-shadow:0 0 14px rgba(212,99,74,.12)}
+
+.nav{display:none;position:fixed;bottom:0;left:0;right:0;padding:14px 24px 24px;z-index:100;pointer-events:none}
+.nav.sh{display:flex;justify-content:space-between;max-width:420px;margin:0 auto}
+.na{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .25s;pointer-events:auto;border:none;font-size:18px}
+.nl{background:var(--card);border:1.5px solid var(--ln);color:var(--t3);box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.nl:hover:not(:disabled){color:var(--txt)}.nl:disabled{opacity:.2;cursor:not-allowed}
+.nr{background:linear-gradient(135deg,var(--warm),#E07B5F);color:#fff;box-shadow:0 2px 10px rgba(212,99,74,.18)}
+.nr:hover:not(:disabled){transform:scale(1.05)}.nr:disabled{opacity:.2;cursor:not-allowed}
+.nr.fn{background:linear-gradient(135deg,var(--gold),#D4A85A);width:auto;border-radius:24px;padding:0 20px;font-size:13px;font-weight:700;letter-spacing:1px}
+
+/* 加载分析页 */
+#loading{display:none;animation:fi .5s}#loading.on{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;min-height:60vh}
+.ld-title{font-size:16px;font-weight:700;color:var(--txt);margin-bottom:24px;text-align:center}
+.ld-bar{width:200px;height:4px;background:var(--ln);border-radius:2px;overflow:hidden;margin-bottom:28px}
+.ld-fill{height:100%;width:0;background:linear-gradient(90deg,var(--warm),var(--gold));border-radius:2px;transition:width .3s linear}
+.ld-tip{font-size:13px;color:var(--t3);text-align:center;min-height:20px;transition:opacity .3s;line-height:1.6}
+
+/* 结果页（与 demo-result 一致） */
+#res{display:none;animation:fi .8s}#res.on{display:block}
+.ctn.res-mode{height:auto;min-height:100vh;padding:14px 18px 32px}
+
+.lead{text-align:center;font-size:12px;color:var(--t3);letter-spacing:3px;margin-bottom:0;font-weight:500}
+.lead .nm{display:inline-block;background:linear-gradient(135deg,var(--warm),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;letter-spacing:2px;font-size:13px}
+
+.hero-card{background:radial-gradient(ellipse at 50% 40%, #FFF6EE 0%, #FAF7F2 70%);border-radius:22px;padding:10px 16px 18px;margin-top:4px;position:relative}
+.hero-name{text-align:center;font-size:30px;font-weight:900;letter-spacing:3px;color:var(--txt);margin:0 0 10px;line-height:1.2}
+.hero-img-box{width:100%;max-height:260px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.hero-img{max-width:280px;max-height:260px;width:auto;height:auto;display:block;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.08))}
+.hero-slogan{text-align:center;font-size:14px;color:var(--t2);margin-top:10px;letter-spacing:1px;font-weight:500;line-height:1.5}
+.keywords{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.kw{display:inline-flex;align-items:center;background:var(--wl);border:1px solid var(--wb);color:var(--warm);font-size:12px;padding:6px 14px;border-radius:14px;font-weight:600;letter-spacing:1px;white-space:nowrap}
+.kw::before{content:'#';margin-right:4px;font-weight:900;opacity:.7}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.stat-box{background:rgba(255,255,255,.85);border:1px solid rgba(212,99,74,.1);border-radius:14px;padding:12px 10px;text-align:center;position:relative;overflow:hidden}
+.stat-box::after{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--warm),var(--gold));opacity:.35}
+.stat-label{font-size:11px;color:var(--t3);margin-bottom:6px;letter-spacing:.5px}
+.stat-value{font-size:13px;color:var(--txt);line-height:1.5;font-weight:500}
+.stat-value .num{display:inline-block;font-size:26px;font-weight:900;color:var(--warm);margin:0 2px}
+.stat-extra{font-size:10px;color:var(--gold);margin-top:6px;font-weight:600;letter-spacing:.5px;line-height:1.4}
+
+.desc{background:rgba(255,255,255,.85);border-radius:16px;padding:16px;margin-top:14px;border:1px solid rgba(212,99,74,.1)}
+.desc-note{font-size:10px;color:#888;text-align:center;margin-bottom:10px;line-height:1.5;font-style:italic}
+.desc-text{font-size:13.5px;color:#444;line-height:2;letter-spacing:.4px;text-align:justify}
+
+.qr-section{margin-top:18px;display:flex;align-items:center;gap:14px;padding:6px 4px}
+.qr-img{width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;padding:4px;flex-shrink:0;border:1px solid rgba(0,0,0,.04);box-sizing:border-box}
+.qr-img canvas, .qr-img img{width:100%!important;height:100%!important;display:block}
+.qr-text{flex:1;display:flex;flex-direction:column;gap:10px}
+.qr-line1{font-size:13px;color:var(--txt);font-weight:600;line-height:1.6}
+.qr-tip{font-size:10px;color:#888;line-height:1.4;letter-spacing:.2px}
+.qr-line2{font-size:12px;color:var(--t2)}
+.qr-line2 .xhs{color:#FF2E4D;font-weight:700;letter-spacing:.3px}
+
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.retry,.save{flex:1;padding:14px;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;text-align:center;letter-spacing:2px;font-family:inherit;transition:all .2s}
+.retry{background:var(--card);border:1.5px solid var(--wb);color:var(--warm)}
+.retry:hover{background:var(--wl)}
+.save{background:linear-gradient(135deg,var(--warm),#E07B5F);border:1.5px solid transparent;color:#fff;box-shadow:0 4px 14px rgba(212,99,74,.25)}
+.save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,99,74,.32)}
+
+.footer{text-align:center;font-size:10px;color:#ccc;margin-top:18px;letter-spacing:2px}
+
+/* 截图相关 */
+#saveMask{position:fixed;inset:0;background:rgba(255,255,255,.88);display:none;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:14px}
+#saveMask.on{display:flex}
+.spinner{width:36px;height:36px;border-radius:50%;border:3px solid var(--wb);border-top-color:var(--warm);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{font-size:13px;color:var(--warm);font-weight:600;letter-spacing:1px}
+
+#imgModal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:10000;flex-direction:column;padding:20px}
+#imgModal.on{display:flex}
+#imgModal .mimg{max-width:100%;max-height:72vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#imgModal .mtip{color:#fff;font-size:13px;margin-top:14px;text-align:center;line-height:1.8;padding:0 20px}
+#imgModal .mclose{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
+/* 顶部彩蛋 toast */
+#daji-toast{position:fixed;top:-80px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#D4634A,#E27858);color:#fff;padding:12px 22px;border-radius:14px;font-size:13px;font-weight:500;line-height:1.4;box-shadow:0 6px 24px rgba(212,99,74,.35);z-index:9999;max-width:92vw;text-align:center;transition:top .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#daji-toast.show{top:24px}
+
+/* 时之奇旅客 弹窗 */
+#easter-toast{position:fixed;top:-100px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#8B5CBA,#A878D6);color:#fff;padding:10px 20px;border-radius:14px;font-size:13px;font-weight:500;line-height:1.4;box-shadow:0 6px 24px rgba(139,92,186,.35);z-index:9999;max-width:92vw;text-align:center;transition:top .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+#easter-toast.show{top:80px}
+#easter-toast .ic{font-size:18px}
+</style>
+</head>
+<body>
+<div id="daji-toast"></div>
+<div id="easter-toast"></div>
+
+<div class="ctn" id="ctn">
+
+<!-- 起始页 -->
+<div id="start">
+<img src="audio/logo.jpg" style="width:90px;height:90px;border-radius:18px;margin-bottom:16px;image-rendering:pixelated">
+<div class="st">NMTI</div>
+<div class="ss" style="font-size:14px;line-height:2">注意！NMTI的NM指的是农民哦～</div>
+<button class="bs" onclick="go()">开始测试</button>
+</div>
+
+<!-- 预加载音频池 -->
+<div style="display:none">
+<audio id="au_makebolo" src="audio/makebolo.mp3" preload="auto"></audio>
+<audio id="au_yase" src="audio/yase.mp3" preload="auto"></audio>
+<audio id="au_wuzetian" src="audio/wuzetian.mp3" preload="auto"></audio>
+<audio id="au_sunce" src="audio/sunce.mp3" preload="auto"></audio>
+<audio id="au_zhongkui" src="audio/zhongkui.mp3" preload="auto"></audio>
+<audio id="au_chengyaojin" src="audio/chengyaojin.mp3" preload="auto"></audio>
+<audio id="au_wusha" src="audio/wusha.mp3" preload="auto"></audio>
+</div>
+
+<div id="qa"></div>
+
+<!-- 加载分析页 -->
+<div id="loading">
+<div class="ld-title">正在分析你的峡谷灵魂…</div>
+<div class="ld-bar"><div class="ld-fill" id="ldFill"></div></div>
+<div class="ld-tip" id="ldTip"></div>
+</div>
+
+<!-- 结果页 -->
+<div id="res"></div>
+
+</div>
+
+<!-- 底部导航 -->
+<div class="nav" id="nv">
+<button class="na nl" id="bL" onclick="prev()">←</button>
+<button class="na nr" id="bR" onclick="next()">→</button>
+</div>
+
+<!-- 截图弹窗 -->
+<div id="saveMask"><div class="spinner"></div><div class="spinner-text">正在生成长图…</div></div>
+<div id="imgModal">
+  <button class="mclose" onclick="closeImgModal()">×</button>
+  <img class="mimg" id="mimg" alt="长图">
+  <div class="mtip">长按图片 → 保存到相册</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="questions.js?v=20260502b"></script>
+<script src="logic.js?v=20260502b"></script>
+<script src="personas.js?v=20260502b"></script>
+
+<script>
+var Q = window.QUESTIONS;
+var cq=0, ans=new Array(Q.length).fill(null), au=null, ht=null;
+var isSecondRound=false; // 第15题D是否已经触发过重置
+
+function go(){
+  document.getElementById('start').style.display='none';
+  document.getElementById('nv').classList.add('sh');
+  cq=0; ans=new Array(Q.length).fill(null);
+  preloadAudios();
+  rdr();
+}
+
+var audioCache={};
+function preloadAudios(){
+  var urls=[];
+  for(var i=0;i<Q.length;i++){
+    var q=Q[i];
+    if(q.au) urls.push(q.au);
+    if(q.o){for(var j=0;j<q.o.length;j++){if(q.o[j].au) urls.push(q.o[j].au);}}
+  }
+  urls.forEach(function(u){
+    if(!audioCache[u]){
+      var a=new Audio();
+      a.src=u; a.preload='auto'; a.load();
+      audioCache[u]=a;
+    }
+  });
+}
+
+function rdr(){
+  var a=document.getElementById('qa'), q=Q[cq], p=Math.round(cq/Q.length*100), sv=ans[cq];
+  var tg=q.t==='judge'?'<span class="qtag tj">判断题</span>':q.t==='multi'?'<span class="qtag tm">多选题</span>':'<span class="qtag tc">选择题</span>';
+  var auh=q.au?'<div class="aw"><button class="ab" onclick="pa(this,\''+q.au+'\')">🔊 重新播放</button></div>':'';
+  var scH=q.img?'<div style="text-align:center;margin-bottom:12px"><img src="'+q.img+'" style="max-width:100%;border-radius:8px"></div>':'';
+  var h='';
+  if(q.t==='judge'){
+    h='<div class="ops jo">';
+    q.sym.forEach(function(s,i){h+='<button class="jb'+(sv===i?' sl':'')+'" data-i="'+i+'" onclick="pj('+i+')">'+s+'</button>'});
+    h+='</div>';
+  }else if(q.t==='multi'){
+    var ss=sv instanceof Set?sv:new Set();
+    q.o.forEach(function(o,i){h+='<button class="ob'+(ss.has(i)?' sl':'')+'" data-i="'+i+'" onclick="pm(this,'+i+')">'+o.l+'</button>'});
+  }else{
+    q.o.forEach(function(o,i){h+='<button class="ob'+(sv===i?' sl':'')+'" data-i="'+i+'" onclick="pc('+i+')">'+o.l+'</button>'});
+  }
+  a.innerHTML='<div class="qs on"><div class="pb"><div class="pt"><div class="pf" style="width:'+p+'%"></div></div><div class="pn">'+(cq+1)+'/'+Q.length+'</div></div><div class="qm"><div class="qinner"><div>'+tg+'</div><div class="qt">'+q.tx+'</div>'+scH+auh+'<div class="ops" id="oa">'+h+'</div></div></div></div>';
+  if(q.hid){
+    if(ht) clearTimeout(ht);
+    var hidQ=cq;
+    var delay=isSecondRound?10000:17000; // 文档说17秒
+    if(sv===q.o.length){addH()}
+    else{ht=setTimeout(function(){if(cq===hidQ) addH()}, delay)}
+  }
+  if(q.au){stp(); au=getAudio(q.au); au.play().catch(function(){})}
+  optPlaying=false;
+  uN();
+}
+
+function addH(){
+  var q=Q[cq]; if(!q.hid) return;
+  var a=document.getElementById('oa');
+  if(!a||a.querySelector('[data-i="'+q.o.length+'"]')) return;
+  var ho=isSecondRound&&q.ho2?q.ho2:q.ho;
+  var b=document.createElement('button');
+  b.className='ob'+(ans[cq]===q.o.length?' sl':'');
+  b.dataset.i=q.o.length;
+  b.textContent=ho.l;
+  b.onclick=function(){pc(q.o.length)};
+  b.style.animation='fi .5s';
+  a.appendChild(b);
+}
+
+function pa(b,s){stp(); au=getAudio(s); b.textContent='🔉 播放中…'; au.play(); au.onended=function(){b.textContent='🔊 重新播放'}}
+
+var AMAP={'audio/makebolo.mp3':'au_makebolo','audio/yase.mp3':'au_yase','audio/wuzetian.mp3':'au_wuzetian','audio/sunce.mp3':'au_sunce','audio/zhongkui.mp3':'au_zhongkui','audio/chengyaojin.mp3':'au_chengyaojin','audio/wusha.mp3':'au_wusha'};
+
+function getAudio(src){
+  var id=AMAP[src];
+  if(id){var el=document.getElementById(id);if(el){try{el.pause();el.currentTime=0;el.volume=1;}catch(e){}return el;}}
+  return new Audio(src);
+}
+
+function stp(){if(au){try{au.pause();au.currentTime=0;au.volume=1;}catch(e){}au.ontimeupdate=null;au=null}}
+
+var optPlaying=false;
+
+function pj(i){ans[cq]=i;document.querySelectorAll('.jb').forEach(function(b){b.classList.remove('sl')});document.querySelector('.jb[data-i="'+i+'"]').classList.add('sl');uN();setTimeout(autoN,350)}
+
+function pc(i){
+  var q=Q[cq];
+  // 第15题隐藏选项 D 的特殊处理
+  if(q.hid && i===q.o.length && !isSecondRound){
+    triggerTimeReset();
+    return;
+  }
+  var optAu=q.o[i]&&q.o[i].au;
+  ans[cq]=i;
+  document.querySelectorAll('.ob').forEach(function(b){b.classList.remove('sl')});
+  var e=document.querySelector('.ob[data-i="'+i+'"]');if(e)e.classList.add('sl');
+  uN();
+
+  stp(); optPlaying=false;
+
+  if(optAu){
+    optPlaying=true;
+    au=getAudio(optAu);
+    au.volume=1;
+    var isQ6A=(cq===5 && i===0); // 第6题A选项淡出
+    au.ontimeupdate = function(){
+      if(!au) return;
+      if(isQ6A){
+        if(au.currentTime>=1 && au.duration>1){
+          var pp=(au.currentTime-1)/(au.duration-1);
+          au.volume=Math.max(0,Math.min(1,1-pp));
+        }
+        if(au.duration-au.currentTime<=0.4){
+          au.ontimeupdate=null;
+          autoN();
+        }
+      }else{
+        if(au.duration-au.currentTime<=1.0){
+          au.ontimeupdate=null;
+          autoN();
+        }
+      }
+    };
+    au.play().catch(function(){setTimeout(autoN,350)});
+  }else{
+    setTimeout(autoN,350);
+  }
+}
+
+function pm(b,i){if(!(ans[cq] instanceof Set))ans[cq]=new Set();var s=ans[cq];if(s.has(i)){s.delete(i);b.classList.remove('sl')}else{s.add(i);b.classList.add('sl')}uN()}
+
+// 第15题D触发：跳回第一题 + 顶部toast
+function triggerTimeReset(){
+  isSecondRound=true;
+  ans=new Array(Q.length).fill(null);
+  if(ht){clearTimeout(ht);ht=null;}
+  stp();optPlaying=false;
+  cq=0;
+  rdr();
+  showDajiToast('小妲己很伤心...你的时光机已经自行启动啦...');
+}
+
+function showDajiToast(msg){
+  var t=document.getElementById('daji-toast');
+  if(!t)return;
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+function showEasterToast(){
+  var t=document.getElementById('easter-toast');
+  if(!t)return;
+  t.innerHTML='<span class="ic">⏳</span> 解锁附加成就「时之奇旅客」';
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show');},3000);
+}
+
+function autoN(){if(Q[cq].t==='multi')return;if(cq<Q.length-1){stp();cq++;rdr()}}
+
+function uN(){var l=document.getElementById('bL'),r=document.getElementById('bR');l.disabled=cq===0;var ok=ans[cq]!==null&&ans[cq]!==undefined;if(ans[cq] instanceof Set)ok=ans[cq].size>0;r.disabled=!ok;if(cq===Q.length-1){r.classList.add('fn');r.textContent='确认提交'}else{r.classList.remove('fn');r.textContent='→'}}
+
+function prev(){if(cq<=0)return;stp();optPlaying=false;cq--;rdr()}
+function next(){var ok=ans[cq]!==null&&ans[cq]!==undefined;if(ans[cq] instanceof Set)ok=ans[cq].size>0;if(!ok)return;stp();optPlaying=false;if(cq===Q.length-1)showR();else{cq++;rdr()}}
+
+var TIPS=[
+'正在向峡谷小兵询问你的评价.....',
+'正在调取你的信誉分....糟糕！怎么好像刷不出充电宝？',
+'稍等，系统溜号打巅峰赛去了...',
+'正在翻阅你的历史战绩...天哪这也太多了',
+'正在联系你的本命英雄确认关系...',
+'正在计算你让队友血压升高的次数...',
+'系统正在回忆你上次五杀是什么时候...好像很久了',
+'峡谷AI正在对你进行灵魂扫描...',
+'正在询问防御塔对你的印象...',
+'正在统计你说"再来一把"之后又打了几把...',
+'你的数据量有点大，请系统喝口水...',
+'检测到大量逆风局记录，系统正在默哀...'
+];
+
+function showR(){
+  document.getElementById('qa').innerHTML='';
+  document.getElementById('nv').classList.remove('sh');
+  var ld=document.getElementById('loading');ld.classList.add('on');
+  var fill=document.getElementById('ldFill'); var tip=document.getElementById('ldTip');
+  fill.style.width='0%';tip.textContent='';
+
+  var pool=TIPS.slice(); var count=3+Math.floor(Math.random()*3); var picked=[];
+  for(var i=0;i<count&&pool.length>0;i++){var idx=Math.floor(Math.random()*pool.length);picked.push(pool.splice(idx,1)[0])}
+  var total=picked.length*1000+Math.floor(Math.random()*1000)+500;
+  var step=100/picked.length;
+  picked.forEach(function(t,i){
+    setTimeout(function(){
+      tip.style.opacity=0;
+      setTimeout(function(){tip.textContent=t;tip.style.opacity=1;fill.style.width=Math.min(100,step*(i+1))+'%'},150);
+    },i*1000);
+  });
+  setTimeout(function(){fill.style.width='100%'},total-400);
+  setTimeout(function(){ld.classList.remove('on');renderResult();},total);
+}
+
+// === 结果页渲染 ===
+// 数据卡随机数规则：按主导维度类型(type)分 5 档
+// - op 操作: 连胜 10-20 (80% 落 10-15 / 20% 落 15-20), 举报 0-10
+// - win 胜负: 连胜 5-30 (80% 落 5-15 / 20% 落 15-30), 举报 5-10
+// - team 团队: 连胜 2-7, 举报 0-5
+// - social 社交: 连胜 0-5, 举报 5-15
+// - rage 暴躁: 连胜 2-5, 举报 50-1000 (80% 落 50-100 / 15% 落 100-500 / 5% 落 900-1000)
+function rndInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+// 分段随机：buckets=[[min,max,prob],...], prob 总和=1
+function rndBucket(buckets){
+  var r = Math.random();
+  var acc = 0;
+  for(var i=0;i<buckets.length;i++){
+    acc += buckets[i][2];
+    if(r < acc) return rndInt(buckets[i][0], buckets[i][1]);
+  }
+  var last = buckets[buckets.length-1];
+  return rndInt(last[0], last[1]);
+}
+function rollWin(type){
+  switch(type){
+    case 'op':     return rndBucket([[10,15,0.8],[15,20,0.2]]);
+    case 'win':    return rndBucket([[5,15,0.8],[15,30,0.2]]);
+    case 'team':   return rndInt(2,7);
+    case 'social': return rndInt(0,5);
+    case 'rage':   return rndInt(2,5);
+    default:       return rndInt(10,15);
+  }
+}
+function rollReport(type){
+  switch(type){
+    case 'op':     return rndInt(0,10);
+    case 'win':    return rndInt(5,10);
+    case 'team':   return rndInt(0,5);
+    case 'social': return rndInt(5,15);
+    case 'rage':   return rndBucket([[50,100,0.8],[100,500,0.15],[900,1000,0.05]]);
+    default:       return rndInt(0,10);
+  }
+}
+
+function renderResult(){
+  var personaId = window.NMTI_JUDGE(ans);
+  // 静默上报（不阻塞渲染）
+  try{
+    fetch('https://ai-native-d8ga6bjzwd88e7eeb-1424829144.ap-shanghai.app.tcloudbase.com/nmti_log',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        personaId: personaId,
+        ua: navigator.userAgent.slice(0,200),
+        sw: window.innerWidth,
+        sh: window.innerHeight,
+        isSecondRound: isSecondRound
+      })
+    }).catch(function(){});
+  }catch(e){}
+  var p = window.PERSONAS[personaId];
+  if(!p){
+    // 兜底
+    p = window.PERSONAS['huozhe'] || {name:'未知', slogan:'-', keywords:[], img:'', desc:'-'};
+  }
+
+  document.querySelector('.ctn').classList.add('res-mode');
+
+  var winN = rollWin(p.type);
+  var reportN = rollReport(p.type);
+  var winExtra = winN>15 ? '<div class="stat-extra">匹配机制之子！</div>' : '';
+  var reportExtra = reportN>10 ? '<div class="stat-extra">信誉分超过90<br>都是对我的不尊重</div>' : '';
+
+  var kwHtml='';
+  p.keywords.forEach(function(k){kwHtml+='<span class="kw">'+k+'</span>'});
+
+  var html =
+    '<div class="lead">你的 <span class="nm">NMTI</span> 是</div>' +
+    '<div class="hero-card">' +
+      '<div class="hero-name">'+p.name+'</div>' +
+      '<div class="hero-img-box"><img class="hero-img" src="'+p.img+'?v=20260502" alt="'+p.name+'"></div>' +
+      '<div class="hero-slogan">"'+p.slogan+'"</div>' +
+      '<div class="keywords">'+kwHtml+'</div>' +
+    '</div>' +
+    '<div class="stats">' +
+      '<div class="stat-box">' +
+        '<div class="stat-label">你每周大概被举报</div>' +
+        '<div class="stat-value"><span class="num">'+reportN+'</span>次</div>' +
+        reportExtra +
+      '</div>' +
+      '<div class="stat-box">' +
+        '<div class="stat-label">现在开局你可以连胜</div>' +
+        '<div class="stat-value"><span class="num">'+winN+'</span>把</div>' +
+        winExtra +
+      '</div>' +
+    '</div>' +
+    '<div class="desc"><div class="desc-note">以下评语都是灵宝偷偷写的！如果让你不满意的话作者已经提前暴揍它了！</div><div class="desc-text">'+p.desc+'</div></div>' +
+    '<div class="qr-section">' +
+      '<div class="qr-img" id="qrCode"></div>' +
+      '<div class="qr-text">' +
+        '<div class="qr-line1">快喊上你的农友，<br>来测测他们的 NMTI 吧！</div>' +
+        '<div class="qr-tip">网页搭建在云端，<br>初次访问时点击"确认访问"就好啦 OvO</div>' +
+        '<div class="qr-line2">小红书关注我 <span class="xhs">@白灼兔子狗</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="btn-row">' +
+      '<button class="retry" onclick="rst()">🔄 重新测试</button>' +
+      '<button class="save" onclick="saveAsImage()">💾 保存结果</button>' +
+    '</div>' +
+    '<div class="footer">NMTI · 王者农民人格测试</div>';
+
+  var el=document.getElementById('res');
+  el.innerHTML=html;
+  el.classList.add('on');
+
+  // 二维码
+  var qr = qrcode(0,'M');
+  qr.addData(location.origin + location.pathname);
+  qr.make();
+  document.getElementById('qrCode').innerHTML = qr.createImgTag(4,0);
+
+  // 时之奇旅客 彩蛋（第15题二次选D）
+  if(isSecondRound && ans[Q.length-1]===Q[Q.length-1].o.length){
+    setTimeout(showEasterToast, 600);
+  }
+}
+
+function rst(){
+  document.querySelector('.ctn').classList.remove('res-mode');
+  document.getElementById('res').classList.remove('on');
+  document.getElementById('res').innerHTML='';
+  document.getElementById('start').style.display='flex';
+  document.getElementById('nv').classList.remove('sh');
+  ans=new Array(Q.length).fill(null);
+  cq=0; isSecondRound=false;
+}
+
+// === 截图功能 ===
+function saveAsImage(){
+  var mask = document.getElementById('saveMask');
+  var page = document.getElementById('res');
+  var btnRow = document.querySelector('.btn-row');
+  var footer = document.querySelector('.footer');
+  var nmEl = page.querySelector('.lead .nm');
+  mask.classList.add('on');
+  if(btnRow) btnRow.style.visibility='hidden';
+  if(footer) footer.style.visibility='hidden';
+  // html2canvas 对 background-clip:text 支持不好，临时换成纯色
+  var nmStyleBackup = null;
+  if(nmEl){
+    nmStyleBackup = nmEl.getAttribute('style') || '';
+    nmEl.setAttribute('style', nmStyleBackup +
+      ';background:none !important;-webkit-background-clip:initial !important;background-clip:initial !important;-webkit-text-fill-color:#D4634A !important;color:#D4634A !important');
+  }
+  requestAnimationFrame(function(){
+    html2canvas(page,{
+      backgroundColor:'#FAF7F2', scale:2, logging:false,
+      allowTaint:true, useCORS:true, imageTimeout:0,
+      // 排除干扰元素：遮罩 / 弹窗 / 按钮行 / footer / 顶部 toast
+      // 避免 html2canvas 克隆 DOM 时把 fixed 遮罩一起渲染成白雾
+      ignoreElements: function(el){
+        if(!el || !el.id && !el.className) return false;
+        var id = el.id || '';
+        var cls = (el.className && typeof el.className === 'string') ? el.className : '';
+        if(id === 'saveMask' || id === 'imgModal' || id === 'daji-toast' || id === 'easter-toast') return true;
+        if(cls.indexOf('btn-row') >= 0 || cls === 'footer') return true;
+        return false;
+      }
+    }).then(function(canvas){
+      if(btnRow) btnRow.style.visibility='';
+      if(footer) footer.style.visibility='';
+      if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+      var dataUrl = canvas.toDataURL('image/png');
+      document.getElementById('mimg').src = dataUrl;
+      mask.classList.remove('on');
+      document.getElementById('imgModal').classList.add('on');
+    }).catch(function(e){
+      if(btnRow) btnRow.style.visibility='';
+      if(footer) footer.style.visibility='';
+      if(nmEl) nmEl.setAttribute('style', nmStyleBackup);
+      mask.classList.remove('on');
+      alert('生成失败：'+(e.message||e));
+    });
+  });
+}
+function closeImgModal(){
+  document.getElementById('imgModal').classList.remove('on');
+}
+</script>
+</body>
+</html>

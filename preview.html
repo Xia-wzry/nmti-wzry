@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>NMTI 结果页预览</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{--warm:#D4634A;--wl:rgba(212,99,74,.08);--wb:rgba(212,99,74,.18);--gold:#C8975A;--gl:rgba(200,151,90,.10);--gb:rgba(200,151,90,.22);--bg:#FAF7F2;--card:#fff;--txt:#2D2D2D;--t2:#666;--t3:#999;--ln:#EBEBEB}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);color:var(--txt);overflow-x:hidden}
+
+/* 顶部切换栏 */
+.switcher{position:sticky;top:0;z-index:50;background:rgba(250,247,242,.92);backdrop-filter:blur(8px);padding:8px 12px;border-bottom:1px solid var(--ln);display:flex;gap:6px;flex-wrap:wrap;font-size:11px;align-items:center}
+.switcher select{font-size:12px;padding:4px 8px;border-radius:6px;border:1px solid var(--ln);background:#fff;font-family:inherit;cursor:pointer;flex:1;min-width:140px}
+.switcher .nav-btn{background:#fff;border:1px solid var(--ln);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;color:var(--t2)}
+.switcher .nav-btn:hover{border-color:var(--warm);color:var(--warm)}
+.switcher .idx{font-size:11px;color:var(--t3);min-width:50px;text-align:center;font-family:monospace}
+
+.page{max-width:420px;margin:0 auto;padding:14px 18px 32px;position:relative}
+.lead{text-align:center;font-size:12px;color:var(--t3);letter-spacing:3px;margin-bottom:0;font-weight:500}
+.lead .nm{display:inline-block;background:linear-gradient(135deg,var(--warm),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;font-weight:900;letter-spacing:2px;font-size:13px}
+
+.hero-card{background:radial-gradient(ellipse at 50% 40%, #FFF6EE 0%, #FAF7F2 70%);border-radius:22px;padding:10px 16px 18px;margin-top:4px;position:relative}
+.hero-name{text-align:center;font-size:30px;font-weight:900;letter-spacing:3px;color:var(--txt);margin:0 0 10px;line-height:1.2}
+.hero-img-box{width:100%;max-height:260px;display:flex;align-items:center;justify-content:center;margin:0 auto}
+.hero-img{max-width:280px;max-height:260px;width:auto;height:auto;display:block;object-fit:contain;filter:drop-shadow(0 6px 10px rgba(0,0,0,.08))}
+.hero-slogan{text-align:center;font-size:14px;color:var(--t2);margin-top:10px;letter-spacing:1px;font-weight:500;line-height:1.5}
+.keywords{display:flex;justify-content:center;gap:8px;margin-top:12px;flex-wrap:wrap}
+.kw{display:inline-flex;align-items:center;background:var(--wl);border:1px solid var(--wb);color:var(--warm);font-size:12px;padding:6px 14px;border-radius:14px;font-weight:600;letter-spacing:1px;white-space:nowrap}
+.kw::before{content:'#';margin-right:4px;font-weight:900;opacity:.7}
+
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+.stat-box{background:rgba(255,255,255,.85);border:1px solid rgba(212,99,74,.1);border-radius:14px;padding:12px 10px;text-align:center;position:relative;overflow:hidden}
+.stat-box::after{content:'';position:absolute;top:0;left:0;width:100%;height:2px;background:linear-gradient(90deg,var(--warm),var(--gold));opacity:.35}
+.stat-label{font-size:11px;color:var(--t3);margin-bottom:6px;letter-spacing:.5px}
+.stat-value{font-size:13px;color:var(--txt);line-height:1.5;font-weight:500}
+.stat-value .num{display:inline-block;font-size:26px;font-weight:900;color:var(--warm);margin:0 2px}
+.stat-extra{font-size:10px;color:var(--gold);margin-top:6px;font-weight:600;letter-spacing:.5px;line-height:1.4}
+
+.desc{background:rgba(255,255,255,.85);border-radius:16px;padding:16px;margin-top:14px;border:1px solid rgba(212,99,74,.1)}
+.desc-note{font-size:10px;color:#888;text-align:center;margin-bottom:10px;line-height:1.5;font-style:italic}
+.desc-text{font-size:13.5px;color:#444;line-height:2;letter-spacing:.4px;text-align:justify}
+
+.qr-section{margin-top:18px;display:flex;align-items:center;gap:14px;padding:6px 4px}
+.qr-img{width:96px;height:96px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:8px;padding:4px;flex-shrink:0;border:1px solid rgba(0,0,0,.04);box-sizing:border-box}
+.qr-img canvas, .qr-img img{width:100%!important;height:100%!important;display:block}
+.qr-text{flex:1;display:flex;flex-direction:column;gap:10px}
+.qr-line1{font-size:13px;color:var(--txt);font-weight:600;line-height:1.6}
+.qr-tip{font-size:10px;color:#888;line-height:1.4;letter-spacing:.2px}
+.qr-line2{font-size:12px;color:var(--t2)}
+.qr-line2 .xhs{color:#FF2E4D;font-weight:700;letter-spacing:.3px}
+
+.footer{text-align:center;font-size:10px;color:#ccc;margin-top:18px;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<div class="switcher">
+  <button class="nav-btn" onclick="prev()">← 上一个</button>
+  <select id="sel" onchange="switchTo(this.value)"></select>
+  <button class="nav-btn" onclick="next()">下一个 →</button>
+  <span class="idx" id="idx">-/25</span>
+</div>
+
+<div class="page" id="page"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="personas.js?v=20260502b"></script>
+<script>
+var ids = Object.keys(window.PERSONAS);
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a}
+function rndBucket(buckets){
+  var r = Math.random(), acc = 0;
+  for(var i=0;i<buckets.length;i++){
+    acc += buckets[i][2];
+    if(r < acc) return rnd(buckets[i][0], buckets[i][1]);
+  }
+  var last = buckets[buckets.length-1];
+  return rnd(last[0], last[1]);
+}
+function rollWin(type){
+  switch(type){
+    case 'op':     return rndBucket([[10,15,0.8],[15,20,0.2]]);
+    case 'win':    return rndBucket([[5,15,0.8],[15,30,0.2]]);
+    case 'team':   return rnd(2,7);
+    case 'social': return rnd(0,5);
+    case 'rage':   return rnd(2,5);
+    default:       return rnd(10,15);
+  }
+}
+function rollReport(type){
+  switch(type){
+    case 'op':     return rnd(0,10);
+    case 'win':    return rnd(5,10);
+    case 'team':   return rnd(0,5);
+    case 'social': return rnd(5,15);
+    case 'rage':   return rndBucket([[50,100,0.8],[100,500,0.15],[900,1000,0.05]]);
+    default:       return rnd(0,10);
+  }
+}
+
+function render(id){
+  var p = window.PERSONAS[id];
+  if(!p) return;
+  document.title = 'NMTI · '+p.name;
+  var winN = rollWin(p.type);
+  var reportN = rollReport(p.type);
+  var winExtra = winN>15 ? '<div class="stat-extra">匹配机制之子！</div>' : '';
+  var reportExtra = reportN>10 ? '<div class="stat-extra">信誉分超过90<br>都是对我的不尊重</div>' : '';
+  var kwHtml=''; p.keywords.forEach(function(k){kwHtml+='<span class="kw">'+k+'</span>'});
+
+  document.getElementById('page').innerHTML =
+    '<div class="lead">你的 <span class="nm">NMTI</span> 是</div>' +
+    '<div class="hero-card">' +
+      '<div class="hero-name">'+p.name+'</div>' +
+      '<div class="hero-img-box"><img class="hero-img" src="personas/'+id+'.png?v=20260502" alt="'+p.name+'"></div>' +
+      '<div class="hero-slogan">"'+p.slogan+'"</div>' +
+      '<div class="keywords">'+kwHtml+'</div>' +
+    '</div>' +
+    '<div class="stats">' +
+      '<div class="stat-box"><div class="stat-label">你每周大概被举报</div><div class="stat-value"><span class="num">'+reportN+'</span>次</div>'+reportExtra+'</div>' +
+      '<div class="stat-box"><div class="stat-label">现在开局你可以连胜</div><div class="stat-value"><span class="num">'+winN+'</span>把</div>'+winExtra+'</div>' +
+    '</div>' +
+    '<div class="desc"><div class="desc-note">以下评语都是灵宝偷偷写的！如果让你不满意的话作者已经提前暴揍它了！</div><div class="desc-text">'+p.desc+'</div></div>' +
+    '<div class="qr-section">' +
+      '<div class="qr-img" id="qrCode"></div>' +
+      '<div class="qr-text">' +
+        '<div class="qr-line1">快喊上你的农友，<br>来测测他们的 NMTI 吧！</div>' +
+        '<div class="qr-tip">网页搭建在云端，<br>初次访问时点击"确认访问"就好啦 OvO</div>' +
+        '<div class="qr-line2">小红书关注我 <span class="xhs">@白灼兔子狗</span></div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="footer">NMTI · 王者农民人格测试</div>';
+
+  var qr = qrcode(0,'M');
+  qr.addData(location.origin+'/');
+  qr.make();
+  document.getElementById('qrCode').innerHTML = qr.createImgTag(4,0);
+
+  var cur = ids.indexOf(id) + 1;
+  document.getElementById('idx').textContent = cur+'/'+ids.length;
+  document.getElementById('sel').value = id;
+  history.replaceState(null,'','?p='+id);
+}
+
+function switchTo(id){render(id)}
+function prev(){
+  var i = ids.indexOf(document.getElementById('sel').value);
+  i = (i-1+ids.length) % ids.length;
+  render(ids[i]);
+}
+function next(){
+  var i = ids.indexOf(document.getElementById('sel').value);
+  i = (i+1) % ids.length;
+  render(ids[i]);
+}
+
+// 初始化
+(function(){
+  var sel = document.getElementById('sel');
+  ids.forEach(function(id,i){
+    var opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = (i+1) + '. ' + window.PERSONAS[id].name;
+    sel.appendChild(opt);
+  });
+  var params = new URLSearchParams(location.search);
+  var pid = params.get('p') || ids[0];
+  if(!window.PERSONAS[pid]) pid = ids[0];
+  render(pid);
+})();
+</script>
+</body>
+</html>

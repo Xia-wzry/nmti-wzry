@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>NMTI 结果页</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap');
+:root{
+  --warm:#D4634A;
+  --warm-dark:#B14A33;
+  --wl:rgba(212,99,74,.08);
+  --wb:rgba(212,99,74,.18);
+  --gold:#C8975A;
+  --gl:rgba(200,151,90,.10);
+  --gb:rgba(200,151,90,.22);
+  --bg:#FAF7F2;
+  --card:#fff;
+  --txt:#2D2D2D;
+  --t2:#666;
+  --t3:#999;
+  --ln:#EBEBEB;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  font-family:'Noto Sans SC',-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  overflow-x:hidden;
+}
+
+/* 切换栏（demo 专用，截图时会隐藏） */
+.switcher{
+  position:sticky;top:0;z-index:50;
+  background:rgba(250,247,242,.92);
+  backdrop-filter:blur(8px);
+  padding:8px 12px;
+  border-bottom:1px solid var(--ln);
+  display:flex;gap:6px;flex-wrap:wrap;
+  font-size:11px;
+}
+.switcher select{
+  font-size:12px;padding:4px 8px;border-radius:6px;
+  border:1px solid var(--ln);background:#fff;
+  font-family:inherit;cursor:pointer;flex:1;min-width:140px;
+}
+
+.page{
+  max-width:420px;
+  margin:0 auto;
+  padding:14px 18px 32px;
+  position:relative;
+}
+
+.lead{
+  text-align:center;
+  font-size:12px;
+  color:var(--t3);
+  letter-spacing:3px;
+  margin-bottom:0;
+  font-weight:500;
+}
+.lead .nm{
+  display:inline-block;
+  background:linear-gradient(135deg,var(--warm),var(--gold));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  font-weight:900;
+  letter-spacing:2px;
+  font-size:13px;
+}
+
+.hero-card{
+  background:radial-gradient(ellipse at 50% 40%, #FFF6EE 0%, #FAF7F2 70%);
+  border-radius:22px;
+  padding:6px 16px 18px;
+  margin-top:4px;
+  position:relative;
+}
+.hero-name{
+  text-align:center;
+  font-size:30px;
+  font-weight:900;
+  letter-spacing:3px;
+  color:var(--txt);
+  margin:0;
+  line-height:1.2;
+}
+.hero-img{
+  width:72%;
+  max-width:260px;
+  display:block;
+  margin:-2px auto -8px;
+  filter:drop-shadow(0 12px 16px rgba(80,30,20,.22)) drop-shadow(0 2px 4px rgba(0,0,0,.08));
+  min-height:220px;
+}
+.hero-img.placeholder{
+  background:repeating-linear-gradient(45deg,#f3ecdf,#f3ecdf 8px,#ece4d3 8px,#ece4d3 16px);
+  border-radius:16px;
+  display:flex;align-items:center;justify-content:center;
+  color:#b8a98a;font-size:13px;letter-spacing:2px;
+  width:60%;
+  filter:none;
+  margin:8px auto;
+}
+.hero-slogan{
+  text-align:center;
+  font-size:14px;
+  color:var(--t2);
+  margin-top:6px;
+  letter-spacing:1px;
+  font-weight:500;
+  line-height:1.5;
+}
+.keywords{
+  display:flex;justify-content:center;
+  gap:8px;margin-top:10px;
+  flex-wrap:wrap;
+}
+.kw{
+  display:inline-flex;align-items:center;
+  background:var(--wl);border:1px solid var(--wb);
+  color:var(--warm);font-size:12px;
+  padding:6px 14px;border-radius:14px;
+  font-weight:600;letter-spacing:1px;
+}
+.kw::before{
+  content:'#';margin-right:4px;font-weight:900;opacity:.7;
+}
+
+.stats{
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:10px;margin-top:14px;
+}
+.stat-box{
+  background:rgba(255,255,255,.85);
+  border:1px solid rgba(212,99,74,.1);
+  border-radius:14px;padding:12px 10px;
+  text-align:center;position:relative;overflow:hidden;
+}
+.stat-box::after{
+  content:'';position:absolute;top:0;left:0;width:100%;height:2px;
+  background:linear-gradient(90deg,var(--warm),var(--gold));
+  opacity:.35;
+}
+.stat-label{
+  font-size:11px;color:var(--t3);
+  margin-bottom:6px;letter-spacing:.5px;
+}
+.stat-value{
+  font-size:13px;color:var(--txt);
+  line-height:1.5;font-weight:500;
+}
+.stat-value .num{
+  display:inline-block;
+  font-size:26px;font-weight:900;
+  color:var(--warm);margin:0 2px;
+}
+
+.desc{
+  background:rgba(255,255,255,.85);
+  border-radius:16px;padding:16px;
+  margin-top:14px;
+  border:1px solid rgba(212,99,74,.1);
+}
+.desc-text{
+  font-size:13.5px;color:#444;
+  line-height:2;letter-spacing:.4px;
+  text-align:justify;
+}
+
+.qr-section{
+  margin-top:18px;
+  display:flex;align-items:center;
+  gap:14px;padding:6px 4px;
+}
+.qr-img{
+  width:96px;height:96px;
+  display:flex;align-items:center;justify-content:center;
+  background:#fff;border-radius:8px;
+  padding:4px;flex-shrink:0;
+  border:1px solid rgba(0,0,0,.04);
+  box-sizing:border-box;
+}
+.qr-img canvas, .qr-img img{
+  width:100%!important;height:100%!important;display:block;
+}
+.qr-text{
+  flex:1;display:flex;flex-direction:column;gap:10px;
+}
+.qr-line1{
+  font-size:13px;color:var(--txt);
+  font-weight:600;line-height:1.6;
+}
+.qr-line2{font-size:12px;color:var(--t2)}
+.qr-line2 .xhs{
+  color:#FF2E4D;font-weight:700;letter-spacing:.3px;
+}
+
+.btn-row{
+  display:flex;gap:10px;margin-top:18px;
+}
+.retry,.save{
+  flex:1;padding:14px;border-radius:14px;
+  font-size:14px;font-weight:700;cursor:pointer;
+  text-align:center;letter-spacing:2px;
+  font-family:inherit;transition:all .2s;
+}
+.retry{
+  background:var(--card);
+  border:1.5px solid var(--wb);
+  color:var(--warm);
+}
+.retry:hover{background:var(--wl)}
+.save{
+  background:linear-gradient(135deg,var(--warm),#E07B5F);
+  border:1.5px solid transparent;
+  color:#fff;
+  box-shadow:0 4px 14px rgba(212,99,74,.25);
+}
+.save:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(212,99,74,.32)}
+.save:active{transform:translateY(0)}
+
+.footer{
+  text-align:center;font-size:10px;
+  color:#ccc;margin-top:18px;letter-spacing:2px;
+}
+
+/* 截图 loading */
+#saveMask{
+  position:fixed;inset:0;background:rgba(255,255,255,.85);
+  display:none;align-items:center;justify-content:center;
+  z-index:9999;flex-direction:column;gap:14px;
+  backdrop-filter:blur(4px);
+}
+#saveMask.on{display:flex}
+.spinner{
+  width:36px;height:36px;border-radius:50%;
+  border:3px solid var(--wb);border-top-color:var(--warm);
+  animation:spin .8s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner-text{font-size:13px;color:var(--warm);font-weight:600;letter-spacing:1px}
+
+#imgModal{
+  position:fixed;inset:0;background:rgba(0,0,0,.85);
+  display:none;align-items:center;justify-content:center;
+  z-index:10000;flex-direction:column;padding:20px;
+}
+#imgModal.on{display:flex}
+#imgModal .mimg{max-width:100%;max-height:72vh;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.5)}
+#imgModal .mtip{color:#fff;font-size:13px;margin-top:14px;text-align:center;line-height:1.8;padding:0 20px}
+#imgModal .mclose{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);color:#fff;border:none;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+</style>
+</head>
+<body>
+
+<!-- demo 切换栏，截图时隐藏 -->
+<div class="switcher" id="switcher">
+  <select id="personaSelect" onchange="switchPersona(this.value)"></select>
+</div>
+
+<div class="page" id="page">
+  <div class="lead">你的 <span class="nm">NMTI</span> 是</div>
+
+  <div class="hero-card">
+    <div class="hero-name" id="heroName">—</div>
+    <div class="hero-img placeholder" id="heroImg">图片占位</div>
+    <div class="hero-slogan" id="heroSlogan">—</div>
+    <div class="keywords" id="keywords"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-box">
+      <div class="stat-label">你每周大概被举报</div>
+      <div class="stat-value"><span class="num" id="reportN">0</span>次</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-label">现在开局你可以连胜</div>
+      <div class="stat-value"><span class="num" id="winN">0</span>把</div>
+    </div>
+  </div>
+
+  <div class="desc">
+    <div class="desc-text" id="descText">—</div>
+  </div>
+
+  <div class="qr-section">
+    <div class="qr-img" id="qrCode"></div>
+    <div class="qr-text">
+      <div class="qr-line1">快喊上你的农友，<br>来测测他们的 NMTI 吧！</div>
+      <div class="qr-line2">小红书关注我 <span class="xhs">@眼球qq弹</span></div>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="retry" onclick="location.reload()">🔄 重新测试</button>
+    <button class="save" onclick="saveAsImage()">💾 保存结果</button>
+  </div>
+
+  <div class="footer">NMTI · 王者农民人格测试</div>
+</div>
+
+<div id="saveMask">
+  <div class="spinner"></div>
+  <div class="spinner-text">正在生成长图…</div>
+</div>
+
+<div id="imgModal">
+  <button class="mclose" onclick="closeImgModal()">×</button>
+  <img class="mimg" id="mimg" alt="长图">
+  <div class="mtip">长按图片 → 保存到相册</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script src="personas.js?v=20260502b"></script>
+
+<script>
+// 渲染当前人格
+function render(p){
+  document.title = 'NMTI · ' + p.name;
+  document.getElementById('heroName').textContent = p.name;
+  document.getElementById('heroSlogan').textContent = '"' + p.slogan + '"';
+
+  // 图片：尝试加载，失败则保留占位
+  var imgEl = document.getElementById('heroImg');
+  var test = new Image();
+  test.onload = function(){
+    var realImg = document.createElement('img');
+    realImg.className = 'hero-img';
+    realImg.src = p.img;
+    realImg.alt = p.name;
+    imgEl.parentNode.replaceChild(realImg, imgEl);
+  };
+  test.onerror = function(){
+    // 保留占位
+    imgEl.className = 'hero-img placeholder';
+    imgEl.textContent = p.name + ' · 图片占位';
+  };
+  test.src = p.img;
+  // 重置占位状态
+  imgEl.className = 'hero-img placeholder';
+  imgEl.textContent = p.name + ' · 图片占位';
+
+  // 关键词
+  var kwHtml = '';
+  p.keywords.forEach(function(k){ kwHtml += '<span class="kw">'+k+'</span>'; });
+  document.getElementById('keywords').innerHTML = kwHtml;
+
+  document.getElementById('descText').textContent = p.desc;
+
+  // 随机数据（demo 用）
+  document.getElementById('reportN').textContent = Math.floor(Math.random()*15)+3;
+  document.getElementById('winN').textContent = Math.floor(Math.random()*8)+1;
+}
+
+// 二维码生成
+function renderQR(){
+  var qrUrl = location.origin + '/';
+  var qr = qrcode(0, 'M');
+  qr.addData(qrUrl);
+  qr.make();
+  document.getElementById('qrCode').innerHTML = qr.createImgTag(4, 0);
+}
+
+// 切换人格
+function switchPersona(id){
+  var p = window.PERSONAS[id];
+  if(!p) return;
+  render(p);
+  // 同步到 URL，方便分享
+  history.replaceState(null,'','?p='+id);
+}
+
+// 初始化
+function init(){
+  // 切换栏
+  var sel = document.getElementById('personaSelect');
+  Object.keys(window.PERSONAS).forEach(function(id){
+    var opt = document.createElement('option');
+    opt.value = id;
+    opt.textContent = window.PERSONAS[id].name;
+    sel.appendChild(opt);
+  });
+  // 默认显示哪个：URL 参数 ?p=xxx 优先
+  var params = new URLSearchParams(location.search);
+  var pid = params.get('p') || 'toutazhe';
+  if(!window.PERSONAS[pid]) pid = Object.keys(window.PERSONAS)[0];
+  sel.value = pid;
+  render(window.PERSONAS[pid]);
+  renderQR();
+}
+init();
+
+// 保存长图
+function saveAsImage(){
+  var mask = document.getElementById('saveMask');
+  var page = document.getElementById('page');
+  var btnRow = document.querySelector('.btn-row');
+  var footer = document.querySelector('.footer');
+  var switcher = document.getElementById('switcher');
+  mask.classList.add('on');
+  btnRow.style.visibility='hidden';
+  footer.style.visibility='hidden';
+  switcher.style.display='none';
+  requestAnimationFrame(function(){
+    html2canvas(page,{
+      backgroundColor:'#FAF7F2',
+      scale:2,
+      logging:false,
+      allowTaint:true,
+      useCORS:true,
+      imageTimeout:0
+    }).then(function(canvas){
+      btnRow.style.visibility='';
+      footer.style.visibility='';
+      switcher.style.display='';
+      var dataUrl = canvas.toDataURL('image/png');
+      document.getElementById('mimg').src = dataUrl;
+      mask.classList.remove('on');
+      document.getElementById('imgModal').classList.add('on');
+    }).catch(function(e){
+      btnRow.style.visibility='';
+      footer.style.visibility='';
+      switcher.style.display='';
+      mask.classList.remove('on');
+      alert('生成失败：'+(e.message||e));
+    });
+  });
+}
+function closeImgModal(){
+  document.getElementById('imgModal').classList.remove('on');
+}
+</script>
+</body>
+</html>

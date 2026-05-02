@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NMTI · 数据后台</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:#FAF7F2;color:#2D2D2D;padding:20px;min-height:100vh}
+.wrap{max-width:880px;margin:0 auto}
+h1{font-size:22px;font-weight:900;margin-bottom:6px;letter-spacing:1px}
+.sub{color:#999;font-size:13px;margin-bottom:24px}
+
+#login{background:#fff;border-radius:14px;padding:32px 24px;box-shadow:0 4px 20px rgba(0,0,0,.06);max-width:360px;margin:60px auto}
+#login input{width:100%;padding:12px 14px;border:1.5px solid #EBEBEB;border-radius:10px;font-size:14px;font-family:inherit;margin-bottom:12px}
+#login input:focus{outline:none;border-color:#D4634A}
+#login button{width:100%;padding:12px;background:linear-gradient(135deg,#D4634A,#E07B5F);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;letter-spacing:2px}
+#login .tip{font-size:11px;color:#999;text-align:center;margin-top:14px}
+
+#dashboard{display:none}
+#dashboard.on{display:block}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:24px}
+.card{background:#fff;border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid #EBEBEB;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px;background:linear-gradient(90deg,#D4634A,#C8975A);opacity:.5}
+.card .lb{font-size:12px;color:#999;letter-spacing:.5px;margin-bottom:6px}
+.card .vl{font-size:32px;font-weight:900;color:#D4634A;line-height:1.2}
+.card .un{font-size:13px;color:#666;margin-left:4px}
+
+.section{background:#fff;border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.04);border:1px solid #EBEBEB;margin-bottom:18px}
+.section h2{font-size:15px;font-weight:700;margin-bottom:14px;color:#444;display:flex;align-items:center;gap:8px}
+.section h2 .ic{color:#D4634A}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid #f0f0f0}
+th{color:#999;font-weight:500;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+td:first-child{font-weight:500}
+td.num{text-align:right;color:#D4634A;font-weight:700;font-family:monospace}
+.bar-cell{position:relative;padding-right:60px}
+.bar-bg{display:inline-block;height:6px;background:#FAF1ED;border-radius:3px;width:160px;vertical-align:middle;margin-right:8px}
+.bar-fl{display:block;height:100%;background:linear-gradient(90deg,#D4634A,#E27858);border-radius:3px}
+.pct{font-size:11px;color:#999;margin-left:6px}
+
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:10px;flex-wrap:wrap}
+.btn{background:#fff;border:1.5px solid #EBEBEB;color:#666;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit}
+.btn:hover{border-color:#D4634A;color:#D4634A}
+.btn.primary{background:#D4634A;color:#fff;border-color:#D4634A}
+
+.daily{display:flex;align-items:flex-end;gap:6px;height:140px;padding:8px 0}
+.daily .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.daily .bar{width:100%;background:linear-gradient(180deg,#E27858,#D4634A);border-radius:4px 4px 0 0;min-height:2px;transition:all .3s}
+.daily .lb{font-size:10px;color:#999;white-space:nowrap}
+.daily .vl{font-size:11px;color:#D4634A;font-weight:700;font-family:monospace}
+
+#err{color:#D4634A;font-size:13px;text-align:center;margin-top:8px}
+
+.empty{text-align:center;padding:60px 20px;color:#999;font-size:13px}
+.empty .ic{font-size:40px;margin-bottom:14px;opacity:.4}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div id="login">
+  <h1 style="text-align:center;font-size:18px;margin-bottom:8px">🔒 NMTI 后台</h1>
+  <div style="text-align:center;color:#999;font-size:12px;margin-bottom:20px">请输入管理员密码</div>
+  <input type="password" id="pwd" placeholder="管理员密码" onkeydown="if(event.key==='Enter')login()">
+  <button onclick="login()">登 录</button>
+  <div id="err"></div>
+  <div class="tip">数据存储于腾讯云 CloudBase</div>
+</div>
+
+<div id="dashboard">
+  <h1>📊 NMTI 数据后台</h1>
+  <div class="sub" id="updTip">最后更新：—</div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="section">
+    <h2><span class="ic">📈</span> 每日新增</h2>
+    <div class="daily" id="dailyChart"></div>
+  </div>
+
+  <div class="section">
+    <h2><span class="ic">🏆</span> 人格分布</h2>
+    <table id="personaTable">
+      <thead><tr><th>人格</th><th>类型</th><th>占比</th><th>人数</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="toolbar" style="justify-content:flex-end">
+    <button class="btn" onclick="refresh()">🔄 刷新</button>
+    <button class="btn" onclick="logout()">退出</button>
+  </div>
+</div>
+
+</div>
+
+<script src="personas.js?v=20260502b"></script>
+<script>
+var API = 'https://ai-native-d8ga6bjzwd88e7eeb-1424829144.ap-shanghai.app.tcloudbase.com/nmti_stats';
+var KEY = '';
+
+// 类型中文映射
+var TYPE_CN = {op:'操作',win:'胜负',rage:'暴躁',team:'团队',social:'社交'};
+var TYPE_COLOR = {op:'#D4634A',win:'#C8975A',rage:'#B14A33',team:'#3B82C4',social:'#8B5CBA'};
+
+function login(){
+  var k = document.getElementById('pwd').value.trim();
+  if(!k){document.getElementById('err').textContent='请输入密码';return;}
+  KEY = k;
+  fetchData(true);
+}
+
+function logout(){
+  KEY='';
+  document.getElementById('login').style.display='block';
+  document.getElementById('dashboard').classList.remove('on');
+  document.getElementById('pwd').value='';
+  document.getElementById('err').textContent='';
+}
+
+function fetchData(isFirst){
+  fetch(API+'?key='+encodeURIComponent(KEY)).then(function(r){
+    if(!r.ok) throw new Error('密码错误或网络异常');
+    return r.json();
+  }).then(function(data){
+    if(isFirst){
+      document.getElementById('login').style.display='none';
+      document.getElementById('dashboard').classList.add('on');
+    }
+    render(data);
+  }).catch(function(e){
+    document.getElementById('err').textContent = '❌ '+(e.message||e);
+  });
+}
+
+function refresh(){fetchData(false)}
+
+function render(data){
+  var total = data.total || 0;
+  var byPersona = data.byPersona || {};
+  var byDate = data.byDate || {};
+
+  // 顶部 cards
+  var dates = Object.keys(byDate).sort();
+  var today = new Date(Date.now()+8*3600*1000).toISOString().slice(0,10);
+  var todayCnt = byDate[today] || 0;
+  var personasCnt = Object.keys(byPersona).length;
+  var topName = '—';
+  var topNum = 0;
+  Object.keys(byPersona).forEach(function(k){
+    if(byPersona[k]>topNum){topNum=byPersona[k];topName=window.PERSONAS[k]?window.PERSONAS[k].name:k}
+  });
+
+  document.getElementById('cards').innerHTML =
+    card('累计测试', total, '次') +
+    card('今日新增', todayCnt, '次') +
+    card('已出现人格', personasCnt+'/25', '种') +
+    card('当前最热', topName, '('+topNum+')');
+
+  // 每日柱状图
+  if(dates.length===0){
+    document.getElementById('dailyChart').innerHTML = '<div class="empty"><div class="ic">📭</div>还没有数据</div>';
+  }else{
+    var maxV = Math.max.apply(null, dates.map(function(d){return byDate[d]}));
+    var html = '';
+    // 取最近 14 天
+    var show = dates.slice(-14);
+    show.forEach(function(d){
+      var v = byDate[d];
+      var h = Math.max(2, v/maxV*120);
+      var lb = d.slice(5); // mm-dd
+      html += '<div class="col"><span class="vl">'+v+'</span><div class="bar" style="height:'+h+'px"></div><span class="lb">'+lb+'</span></div>';
+    });
+    document.getElementById('dailyChart').innerHTML = html;
+  }
+
+  // 人格表
+  var rows = Object.keys(byPersona).map(function(id){
+    return {id:id, count:byPersona[id], name: (window.PERSONAS[id]&&window.PERSONAS[id].name)||id, type:(window.PERSONAS[id]&&window.PERSONAS[id].type)||'?'};
+  }).sort(function(a,b){return b.count-a.count});
+
+  var tb = document.querySelector('#personaTable tbody');
+  if(rows.length===0){
+    tb.innerHTML = '<tr><td colspan="4"><div class="empty"><div class="ic">📭</div>还没有数据</div></td></tr>';
+  }else{
+    tb.innerHTML = rows.map(function(r){
+      var pct = (r.count/total*100);
+      var typeColor = TYPE_COLOR[r.type] || '#999';
+      return '<tr>' +
+        '<td>'+r.name+'</td>' +
+        '<td><span style="color:'+typeColor+';font-weight:600">'+(TYPE_CN[r.type]||r.type)+'</span></td>' +
+        '<td class="bar-cell"><span class="bar-bg"><span class="bar-fl" style="width:'+pct+'%"></span></span><span class="pct">'+pct.toFixed(1)+'%</span></td>' +
+        '<td class="num">'+r.count+'</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('updTip').textContent = '最后更新：'+new Date().toLocaleString('zh-CN');
+}
+
+function card(label, value, unit){
+  return '<div class="card"><div class="lb">'+label+'</div><div class="vl">'+value+'<span class="un">'+(unit||'')+'</span></div></div>';
+}
+</script>
+</body>
+</html>

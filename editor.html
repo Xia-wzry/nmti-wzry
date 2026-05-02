@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>NMTI 题目编辑器</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif}
+body{background:#fafafa;color:#333;padding:20px;line-height:1.6}
+.app{max-width:1100px;margin:0 auto}
+.header{background:linear-gradient(135deg,#D4634A,#D4A03C);color:#fff;padding:24px 28px;border-radius:14px;margin-bottom:20px;box-shadow:0 4px 16px rgba(212,99,74,.15)}
+.header h1{font-size:24px;margin-bottom:6px}
+.header .sub{font-size:13px;opacity:.9}
+.toolbar{background:#fff;padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.btn{background:#fff;border:1.5px solid #ddd;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;transition:all .15s;color:#333}
+.btn:hover{border-color:#D4634A;color:#D4634A}
+.btn.primary{background:linear-gradient(135deg,#D4634A,#E27858);color:#fff;border-color:transparent}
+.btn.primary:hover{box-shadow:0 4px 12px rgba(212,99,74,.3);color:#fff}
+.btn.danger{color:#c33;border-color:#fcc}
+.btn.danger:hover{background:#fee;border-color:#c33;color:#c33}
+.btn.small{padding:4px 10px;font-size:12px}
+.stat{margin-left:auto;color:#999;font-size:12px}
+
+.qcard{background:#fff;border-radius:12px;padding:18px 22px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.05);transition:all .2s;position:relative}
+.qcard:hover{box-shadow:0 3px 12px rgba(0,0,0,.08)}
+.qcard.dragging{opacity:.4}
+.q-head{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.q-num{font-size:18px;font-weight:700;color:#D4634A;min-width:50px}
+.q-tag{padding:2px 10px;border-radius:6px;font-size:11px;font-weight:700;color:#fff}
+.q-tag.judge{background:#D4634A}
+.q-tag.choice{background:#3B82C4}
+.q-tag.multi{background:#8B5CBA}
+.q-tag.audio{background:#666}
+.q-tag.hid{background:#a855f7}
+.q-tag.img{background:#0d9488}
+.q-handle{cursor:move;color:#bbb;font-size:18px;user-select:none;padding:4px 8px}
+.q-actions{margin-left:auto;display:flex;gap:6px}
+
+.q-text{font-size:15px;color:#222;margin-bottom:10px;line-height:1.7;padding:10px 14px;background:#fafafa;border-left:3px solid #D4634A;border-radius:4px}
+.q-opts{padding-left:8px}
+.q-opt{padding:6px 0;font-size:13px;color:#555;display:flex;gap:8px;align-items:flex-start}
+.q-opt-text{flex:1}
+.q-opt-meta{color:#999;font-size:11px;flex-shrink:0}
+
+/* 编辑模态框 */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-body{background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:90vh;overflow-y:auto;padding:24px}
+.modal h2{font-size:18px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee;display:flex;align-items:center;gap:10px}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:600}
+.field input,.field textarea,.field select{width:100%;border:1.5px solid #ddd;border-radius:8px;padding:8px 12px;font-size:14px;font-family:inherit;color:#333;background:#fff}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:#D4634A}
+.field textarea{resize:vertical;min-height:60px;line-height:1.6}
+.field .hint{font-size:11px;color:#999;margin-top:3px}
+.field-row{display:flex;gap:12px}
+.field-row .field{flex:1}
+
+.opts-edit{border:1px solid #eee;border-radius:10px;padding:12px;background:#fafafa;margin-bottom:14px}
+.opts-edit .opts-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.opts-edit .opts-head strong{font-size:13px;color:#555}
+.opt-row{background:#fff;border:1px solid #e8e8e8;border-radius:8px;padding:10px;margin-bottom:8px}
+.opt-row .opt-row-head{display:flex;gap:8px;align-items:center;margin-bottom:6px}
+.opt-row .opt-idx{font-weight:700;color:#D4634A;min-width:24px}
+.opt-row input.opt-text{flex:1;border:none;border-bottom:1px dashed #ddd;padding:4px 0;font-size:13px;background:transparent}
+.opt-row input.opt-text:focus{outline:none;border-bottom-color:#D4634A}
+.opt-row .opt-meta-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;font-size:11px;color:#999}
+.dim-input{width:60px;border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:11px;text-align:center}
+.dim-label{font-size:10px;color:#888;margin-right:2px}
+
+.modal-footer{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid #eee}
+
+#exportArea{width:100%;height:300px;font-family:Menlo,Consolas,monospace;font-size:12px;border:1px solid #ddd;border-radius:8px;padding:12px;background:#fafafa;color:#333;line-height:1.5}
+
+.toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(40,40,40,.92);color:#fff;padding:10px 18px;border-radius:24px;font-size:13px;z-index:2000;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+
+.tags-input{display:flex;flex-wrap:wrap;gap:6px;align-items:center;border:1.5px solid #ddd;border-radius:8px;padding:6px 10px;min-height:36px;background:#fff}
+.tag-chip{background:#fef0ec;color:#D4634A;font-size:11px;padding:2px 8px;border-radius:10px;display:flex;align-items:center;gap:4px}
+.tag-chip .x{cursor:pointer;font-weight:700;color:#999}
+.tags-input input{border:none;outline:none;flex:1;min-width:60px;font-size:12px;background:transparent}
+
+.dim-help{background:#fff8e6;border:1px solid #fdd884;border-radius:8px;padding:10px 14px;font-size:12px;color:#856404;margin-bottom:10px;line-height:1.7}
+.dim-help b{color:#664d03}
+
+/* 隐藏选项编辑 */
+.hidden-opt-block{margin-top:10px;padding:10px;background:#f5e8ff;border:1px dashed #a855f7;border-radius:8px}
+.hidden-opt-block strong{color:#7e22ce;font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+  <h1>📝 NMTI 题目编辑器</h1>
+  <div class="sub">在浏览器里直接增改删题目，改完点「📤 导出 JSON」把内容发我，我同步到测试代码</div>
+</div>
+
+<div class="toolbar">
+  <button class="btn primary" onclick="newQuestion()">+ 新增题目</button>
+  <button class="btn" onclick="loadFromCurrent()">🔄 从 index.html 重新载入</button>
+  <button class="btn" onclick="showExport()">📤 导出 JSON</button>
+  <button class="btn" onclick="showImport()">📥 导入 JSON</button>
+  <button class="btn danger" onclick="resetAll()">🗑 清空所有</button>
+  <span class="stat" id="stat">共 0 题</span>
+</div>
+
+<div id="qlist"></div>
+
+<!-- 编辑模态框 -->
+<div class="modal" id="editModal">
+  <div class="modal-body">
+    <h2 id="editTitle">编辑题目</h2>
+
+    <div class="field">
+      <label>题型</label>
+      <select id="fType" onchange="onTypeChange()">
+        <option value="judge">判断题</option>
+        <option value="choice">选择题</option>
+        <option value="multi">多选题</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>题干</label>
+      <textarea id="fText" placeholder="题目正文，可使用 &lt;br&gt; 换行"></textarea>
+      <div class="hint">提示：用 &lt;br&gt; 表示手动换行</div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>音频文件（可选）</label>
+        <input id="fAudio" placeholder="例：audio/yase.mp3">
+        <div class="hint">进入题目时自动播放</div>
+      </div>
+      <div class="field">
+        <label>插图文件（可选）</label>
+        <input id="fImg" placeholder="例：audio/score.png">
+        <div class="hint">显示在题干下方</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>底部小提示（可选）</label>
+      <input id="fHint" placeholder="例：单击可试听，双击可选择">
+    </div>
+
+    <div class="dim-help">
+      <b>维度说明：</b>D1=自信心 · D2=社交性 · D3=胜负欲 · D4=团队性 · D5=王者了解度 · D6=暴躁值<br>
+      <b>tag 说明：</b>conf=自信向 · social=社交向 · win=胜负向 · team=团队向 · know=知识题 · rage=暴躁向 · abs=抽象向（用于乐子人判定）
+    </div>
+
+    <div class="opts-edit">
+      <div class="opts-head">
+        <strong>选项</strong>
+        <button class="btn small" onclick="addOpt()">+ 添加选项</button>
+      </div>
+      <div id="optsList"></div>
+    </div>
+
+    <!-- 隐藏选项（仅选择题）-->
+    <div id="hiddenOptArea" style="display:none">
+      <div class="field">
+        <label>
+          <input type="checkbox" id="fHasHidden" onchange="toggleHidden()" style="width:auto;margin-right:6px"> 启用隐藏选项 D（停留 N 秒后出现）
+        </label>
+      </div>
+      <div id="hiddenOptBlock" class="hidden-opt-block" style="display:none">
+        <strong>🎁 隐藏选项</strong>
+        <div class="field" style="margin-top:8px;margin-bottom:8px">
+          <label>选项文本</label>
+          <input id="fHiddenLabel" placeholder="例：D.（小妲己失望地看着你）...">
+        </div>
+        <div id="hiddenScores"></div>
+        <div class="field" style="margin-top:8px">
+          <label>tag（逗号分隔，如 abs,team）</label>
+          <input id="fHiddenTags" placeholder="abs">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">取消</button>
+      <button class="btn primary" onclick="saveQuestion()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 导出/导入模态框 -->
+<div class="modal" id="ioModal">
+  <div class="modal-body">
+    <h2 id="ioTitle">📤 导出 JSON</h2>
+    <textarea id="exportArea"></textarea>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeIoModal()">关闭</button>
+      <button class="btn primary" id="ioActionBtn" onclick="ioAction()">复制到剪贴板</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- 自定义确认对话框 -->
+<div class="modal" id="confirmModal" style="z-index:3000">
+  <div class="modal-body" style="max-width:420px">
+    <h2 id="confirmTitle">⚠️ 确认</h2>
+    <div id="confirmMsg" style="font-size:14px;color:#444;line-height:1.7;white-space:pre-wrap;padding:8px 0 16px"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="confirmCancel()">取消</button>
+      <button class="btn primary danger" id="confirmOkBtn" onclick="confirmOk()">确认</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ====== 当前数据（从 index.html 同步过来的快照）======
+var DEFAULT_DATA = [
+  {t:'judge',sym:['✅','❌'],
+   tx:'我好像是玩王者荣耀的天才',
+   o:[{s:{D1:3}},{s:{D1:-1}}],tag:['conf']},
+  {t:'judge',sym:['✅','❌'],
+   tx:'我的技术已经登峰造极了，<br>一直上不了分都是因为天杀的队友在害我',
+   o:[{s:{D1:3,D6:2}},{s:{D1:-1}}],tag:['conf','rage']},
+  {t:'judge',sym:['✅','❌','❓'],au:'audio/yase.mp3',img:'audio/score.png',
+   tx:'以下这段五线谱是否正确演奏老亚瑟的美妙歌喉？',
+   o:[{s:{D5:2}},{s:{}},{s:{}}]},
+  {t:'choice',
+   tx:'和朋友开黑被要求玩其他分路时，你会？',
+   o:[{l:'A. 易如反掌💅我是英雄海，等我show time！',s:{D1:3},tag:['conf']},
+      {l:'B. 不知道我是英雄勺吗？把我全部暴露！拒绝不玩了',s:{D2:-1,D4:-1}},
+      {l:'C. 专一是人类最好的品德，我将在不同的分路掏出相同的英雄',s:{D1:1},tag:['abs']},
+      {l:'D. 今天背了一首词，你的请求我在所不辞（打开视频软件搜索"3分钟教你变成大国标"）',s:{D2:2,D4:3},tag:['team']}]},
+  {t:'choice',au:'audio/wuzetian.mp3',
+   tx:'以下音频是哪个英雄在做什么？',
+   o:[{l:'A. 女高音武则天练声中',s:{D5:2},tag:['know']},
+      {l:'B. 朵莉亚演唱人鱼之歌（正在变声期）',s:{},tag:['abs']},
+      {l:'C. 司空震大招起飞坠机的娇嗔',s:{},tag:['abs']},
+      {l:'D. 芈月召唤血之禁术的吟唱',s:{}}]},
+  {t:'choice',
+   tx:'朋友被对面五人包围了，大喊："来接我一下！"你会？',
+   o:[{l:'A. 五杀（凤鸣）',s:{D1:1,D3:3,D4:-2},au:'audio/wusha.mp3',tag:['win']},
+      {l:'B. 谁在说话？',s:{D1:1},tag:['abs']},
+      {l:'C. 胖猫我来陪你了',s:{D2:2,D4:2},tag:['abs','team']},
+      {l:'D. 所有苦难让我替你承受',s:{D2:2,D4:3},tag:['team']}]},
+  {t:'choice',
+   tx:'五连跪后仍在大逆风，你最想给队友发送的语音是？',
+   o:[{l:'A.（孙策）我的狗像我，我像我的狗',s:{D3:-2},au:'audio/sunce.mp3',tag:['abs']},
+      {l:'B.（钟馗）垃圾，就该待在垃圾桶里',s:{D6:3,D3:1},au:'audio/zhongkui.mp3',tag:['rage']},
+      {l:'C.（程咬金）好舒服啊！',s:{D3:-2},au:'audio/chengyaojin.mp3',tag:['abs']},
+      {l:'D. 我的主观能动性在指引我打开麦克风进行文学创作',s:{D6:3},tag:['rage']}]},
+  {t:'multi',
+   tx:'爱玩王者的人具有以下哪些优点？（可多选）',
+   o:[{l:'A. 精神稳定',s:{},tag:['abs']},
+      {l:'B. 团结友爱',s:{D2:2,D4:1},tag:['team']},
+      {l:'C. 语言表达能力强',s:{D6:2},tag:['rage']},
+      {l:'D. 善于发明创造',s:{D1:1},tag:['abs']},
+      {l:'E. 逻辑思维清晰',s:{D3:2},tag:['win']},
+      {l:'F. 动手能力强',s:{D1:1,D3:1}}]},
+  {t:'choice',
+   tx:'以下哪种情况，你会愿意认真听从队友的指挥？',
+   o:[{l:'A. 队友在选英雄阶段亮出耀眼的战绩',s:{D3:3},tag:['win']},
+      {l:'B. 队友被抓爆了，惨兮兮的哭求你帮帮他',s:{D2:2,D4:2},tag:['team']},
+      {l:'C. 我是团队性人格，只要面向胜利，随时都愿意侧耳倾听',s:{D3:1,D4:3},tag:['team','win']},
+      {l:'D. 在和你的神说什么？躺平等赢好吗？好的',s:{D1:3,D4:-2,D6:1},tag:['conf','abs']}]},
+  {t:'choice',
+   tx:'如果把你的王者游戏过程拍成电影，片名最可能是？',
+   o:[{l:'A.《战狼》',s:{D1:2,D3:3},tag:['conf','win']},
+      {l:'B.《三傻大闹宝莱坞》',s:{D2:2},tag:['social']},
+      {l:'C.《最强辩手》',s:{D6:3},tag:['rage']},
+      {l:'D.《十面埋伏》',s:{D2:1},tag:['abs']},
+      {l:'E.《追梦赤子心》',s:{D1:1,D3:2},tag:['win']},
+      {l:'F.《再见爱人》',s:{}}]},
+  {t:'choice',
+   tx:'发生团战时，你的状态更倾向于？',
+   o:[{l:'A. 指挥者：手口并用的大脑玩家，操作的同时纵观全局指挥',s:{D4:3,D2:1},tag:['team']},
+      {l:'B. 秀者：闭麦沉浸式操作中，在这一瞬间身边的空气都为我冻结',s:{D1:2,D4:-2,D3:2},tag:['conf']},
+      {l:'C. 死者：不小心买成了电影票，VIP上帝视角观看团战中',s:{D1:-2},tag:['abs']},
+      {l:'D. 爱打王者：有团我就打，节不节奏操不操作都是浮云，是秀是送上天自有定夺',s:{D3:-2},tag:['abs']}]},
+  {t:'choice',
+   tx:'你是一个脆皮法师，满血路过草丛被项羽一刀劈死了，你的反应是？',
+   o:[{l:'A. ****项羽我***你*****',s:{}},
+      {l:'B. *****策划你全****了',s:{}},
+      {l:'C. 强就拿去上分，下把我来玩',s:{}},
+      {l:'D. 狂点辅助治疗术已就绪',s:{}}]},
+  {t:'choice',
+   tx:'每次打开王者排位时，你的状态是？',
+   o:[{l:'A. 当然是单排，强者总是孤独的',s:{D1:3,D2:-2,D4:-2},tag:['conf']},
+      {l:'B. 开黑开黑开黑！所有朋友立刻给我上线！',s:{D2:3},tag:['social']},
+      {l:'C. 小代，上！大代，上！好友代，上！通天代，上！我的王者只需要两个字：胜利',s:{D3:3},tag:['win','abs']},
+      {l:'D. 单排也行双排也行多排也行肋排也行，我就在这里，不躲，不藏，不逃，不避，稳稳地接住你',s:{D2:1,D4:1},tag:['abs']}]},
+  {t:'choice',
+   tx:'你被对线单杀后，对面疯狂使用暖冬家园回城嘲讽，你的反应是？',
+   o:[{l:'A. 急火攻心，不顾一切都要取对面项上狗头',s:{}},
+      {l:'B. 小丑，无需在意',s:{}},
+      {l:'C. 呼叫队友集合埋伏阴一手',s:{}},
+      {l:'D. 忍辱负重，准备一万字在对面水晶爆炸之前再发送',s:{}}]},
+  {t:'choice',hid:true,
+   tx:'假如世界上出现了时光机，你最想用它？',
+   o:[{l:'A. 穿越到五年前，再享受五年火热的王者荣耀',s:{D2:2}},
+      {l:'B. 穿越到五年后，体验一把未来的王者荣耀',s:{D3:1}},
+      {l:'C. 穿越到十年前，一起加入研发王者荣耀',s:{D3:2,D1:1},tag:['win']}],
+   ho:{l:'D.（小妲己在天上失望的看着你）很犹豫哦，看来你的时光机另有安排....',s:{},tag:['abs']}}
+];
+
+var DIMS = ['D1','D2','D3','D4','D5','D6'];
+var DIM_NAMES = {D1:'自信',D2:'社交',D3:'胜负',D4:'团队',D5:'了解',D6:'暴躁'};
+
+var QS = []; // 当前题目数据
+var editingIdx = -1; // 正在编辑的题目索引（-1 = 新增）
+
+// ====== 持久化 ======
+function save() { localStorage.setItem('nmti_editor_data', JSON.stringify(QS)); }
+function load() {
+  var raw = localStorage.getItem('nmti_editor_data');
+  if (raw) {
+    try { QS = JSON.parse(raw); return true; } catch(e) {}
+  }
+  return false;
+}
+function loadFromCurrent() {
+  myConfirm('确定要从 index.html 默认数据重新载入？\n这会覆盖你当前的所有改动！', function(ok) {
+    if (!ok) return;
+    QS = JSON.parse(JSON.stringify(DEFAULT_DATA));
+    save(); render(); toast('已从 index.html 载入');
+  });
+}
+function resetAll() {
+  myConfirm('确定要清空所有题目？\n此操作不可撤销', function(ok) {
+    if (!ok) return;
+    QS = [];
+    save(); render(); toast('已清空');
+  });
+}
+
+// ====== 渲染列表 ======
+function render() {
+  var el = document.getElementById('qlist');
+  if (QS.length === 0) {
+    el.innerHTML = '<div style="background:#fff;padding:60px;text-align:center;border-radius:12px;color:#999">暂无题目，点上方「+ 新增题目」开始</div>';
+  } else {
+    var html = '';
+    QS.forEach(function(q, i) {
+      html += renderCard(q, i);
+    });
+    el.innerHTML = html;
+  }
+  document.getElementById('stat').textContent = '共 ' + QS.length + ' 题';
+}
+
+function renderCard(q, i) {
+  var typeName = q.t === 'judge' ? '判断题' : (q.t === 'multi' ? '多选题' : '选择题');
+  var tags = '<span class="q-tag '+q.t+'">' + typeName + '</span>';
+  if (q.au) tags += '<span class="q-tag audio">🔊 音频</span>';
+  if (q.img) tags += '<span class="q-tag img">🖼 图片</span>';
+  if (q.hid) tags += '<span class="q-tag hid">🎁 隐藏选项</span>';
+
+  var optsHtml = '';
+  q.o.forEach(function(o, j) {
+    var label = q.t === 'judge' ? (q.sym ? q.sym[j] : ['✅','❌','❓'][j]) : (o.l || '');
+    var meta = formatScores(o.s);
+    if (o.au) meta = (meta?meta+' · ':'') + '🔊 ' + o.au.split('/').pop();
+    if (o.tag && o.tag.length) meta = (meta?meta+' · ':'') + 'tag:[' + o.tag.join(',') + ']';
+    optsHtml += '<div class="q-opt"><div class="q-opt-text">' + escapeHtml(label) + '</div><div class="q-opt-meta">' + meta + '</div></div>';
+  });
+  if (q.ho) {
+    var hMeta = formatScores(q.ho.s);
+    if (q.ho.tag && q.ho.tag.length) hMeta = (hMeta?hMeta+' · ':'') + 'tag:[' + q.ho.tag.join(',') + ']';
+    optsHtml += '<div class="q-opt" style="background:#f5e8ff;padding:6px 10px;border-radius:6px;margin-top:4px"><div class="q-opt-text">' + escapeHtml(q.ho.l) + '</div><div class="q-opt-meta">' + hMeta + '</div></div>';
+  }
+
+  var hint = q.hint ? '<div style="font-size:11px;color:#a855f7;margin-top:8px;padding-left:8px">💡 ' + escapeHtml(q.hint) + '</div>' : '';
+  var imgPreview = q.img ? '<div style="margin:8px 0"><img src="'+q.img+'" style="max-width:200px;max-height:80px;border-radius:6px;border:1px solid #eee"></div>' : '';
+
+  return '<div class="qcard" data-idx="'+i+'">' +
+    '<div class="q-head">' +
+      '<span class="q-handle" draggable="true">⋮⋮</span>' +
+      '<span class="q-num">第' + (i+1) + '题</span>' +
+      tags +
+      '<div class="q-actions">' +
+        '<button class="btn small" onclick="moveUp('+i+')">↑</button>' +
+        '<button class="btn small" onclick="moveDown('+i+')">↓</button>' +
+        '<button class="btn small" onclick="editQuestion('+i+')">✏️ 编辑</button>' +
+        '<button class="btn small danger" onclick="delQuestion('+i+')">🗑 删除</button>' +
+      '</div>' +
+    '</div>' +
+    '<div class="q-text">' + q.tx + '</div>' +
+    imgPreview +
+    '<div class="q-opts">' + optsHtml + '</div>' +
+    hint +
+  '</div>';
+}
+
+function formatScores(s) {
+  if (!s) return '';
+  var parts = [];
+  for (var k in s) {
+    if (s[k] === 0 || s[k] == null) continue;
+    parts.push(DIM_NAMES[k]+(s[k]>0?'+':'')+s[k]);
+  }
+  return parts.join(' ');
+}
+function escapeHtml(s) {
+  return String(s||'').replace(/[&<>"']/g, function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]});
+}
+
+// ====== 移动 / 删除 ======
+function moveUp(i) { if (i<=0) return; var t=QS[i-1]; QS[i-1]=QS[i]; QS[i]=t; save(); render(); }
+function moveDown(i) { if (i>=QS.length-1) return; var t=QS[i+1]; QS[i+1]=QS[i]; QS[i]=t; save(); render(); }
+function delQuestion(i) {
+  myConfirm('确定删除第'+(i+1)+'题？\n\n'+QS[i].tx.replace(/<br>/g,' '), function(ok) {
+    if (!ok) return;
+    QS.splice(i,1); save(); render(); toast('已删除');
+  });
+}
+
+// ====== 编辑 / 新增 ======
+function newQuestion() {
+  editingIdx = -1;
+  document.getElementById('editTitle').textContent = '➕ 新增题目';
+  // 默认空选择题
+  var blank = {t:'choice',tx:'',o:[{l:'A. ',s:{}},{l:'B. ',s:{}}]};
+  fillForm(blank);
+  document.getElementById('editModal').classList.add('show');
+}
+function editQuestion(i) {
+  editingIdx = i;
+  document.getElementById('editTitle').textContent = '✏️ 编辑第' + (i+1) + '题';
+  fillForm(QS[i]);
+  document.getElementById('editModal').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('editModal').classList.remove('show');
+}
+
+function fillForm(q) {
+  document.getElementById('fType').value = q.t;
+  document.getElementById('fText').value = q.tx || '';
+  document.getElementById('fAudio').value = q.au || '';
+  document.getElementById('fImg').value = q.img || '';
+  document.getElementById('fHint').value = q.hint || '';
+
+  // 选项
+  renderOpts(q);
+
+  // 隐藏选项
+  document.getElementById('fHasHidden').checked = !!q.hid;
+  if (q.hid && q.ho) {
+    document.getElementById('fHiddenLabel').value = q.ho.l || '';
+    renderHiddenScores(q.ho.s || {});
+    document.getElementById('fHiddenTags').value = (q.ho.tag||[]).join(',');
+  } else {
+    document.getElementById('fHiddenLabel').value = '';
+    renderHiddenScores({});
+    document.getElementById('fHiddenTags').value = '';
+  }
+  onTypeChange();
+  toggleHidden();
+}
+
+function onTypeChange() {
+  var t = document.getElementById('fType').value;
+  document.getElementById('hiddenOptArea').style.display = (t === 'choice') ? '' : 'none';
+  if (t !== 'choice') document.getElementById('fHasHidden').checked = false;
+  toggleHidden();
+}
+
+function toggleHidden() {
+  document.getElementById('hiddenOptBlock').style.display = document.getElementById('fHasHidden').checked ? '' : 'none';
+}
+
+function renderOpts(q) {
+  var t = q.t;
+  var html = '';
+  q.o.forEach(function(o, j) {
+    var label = t === 'judge' ? (q.sym?q.sym[j]:['✅','❌','❓'][j]) : (o.l || '');
+    html += '<div class="opt-row" data-i="'+j+'">' +
+      '<div class="opt-row-head">' +
+        '<span class="opt-idx">'+(t==='judge'?label:String.fromCharCode(65+j))+'</span>' +
+        (t==='judge'
+          ? '<span style="color:#999;font-size:12px">符号选项</span>'
+          : '<input class="opt-text" value="'+escapeAttr(o.l||'')+'" placeholder="选项内容（含 A./B. 前缀）">') +
+        '<button class="btn small danger" onclick="delOpt('+j+')">×</button>' +
+      '</div>' +
+      '<div class="opt-meta-row">' + renderScoresInput(o.s||{}, j) + '</div>' +
+      '<div style="margin-top:6px;display:flex;gap:8px;align-items:center">' +
+        '<span style="font-size:11px;color:#888">音频:</span>' +
+        '<input class="opt-au" data-i="'+j+'" value="'+escapeAttr(o.au||'')+'" placeholder="audio/xxx.mp3" style="flex:1;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-size:11px">' +
+        '<span style="font-size:11px;color:#888">tag:</span>' +
+        '<input class="opt-tag" data-i="'+j+'" value="'+escapeAttr((o.tag||[]).join(','))+'" placeholder="conf,abs" style="flex:1;border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-size:11px">' +
+      '</div>' +
+    '</div>';
+  });
+  document.getElementById('optsList').innerHTML = html;
+}
+
+function renderScoresInput(s, optIdx) {
+  var html = '';
+  DIMS.forEach(function(d) {
+    var v = s[d] || '';
+    html += '<span><span class="dim-label">'+DIM_NAMES[d]+':</span><input class="dim-input" data-opt="'+optIdx+'" data-dim="'+d+'" value="'+v+'" placeholder="0"></span>';
+  });
+  return html;
+}
+
+function renderHiddenScores(s) {
+  var html = '<div style="font-size:11px;color:#666;margin-bottom:4px">维度加分：</div>';
+  html += '<div class="opt-meta-row">';
+  DIMS.forEach(function(d) {
+    var v = s[d] || '';
+    html += '<span><span class="dim-label">'+DIM_NAMES[d]+':</span><input class="hidden-dim-input" data-dim="'+d+'" value="'+v+'" placeholder="0" style="width:60px;border:1px solid #ddd;border-radius:4px;padding:2px 4px;font-size:11px;text-align:center"></span>';
+  });
+  html += '</div>';
+  document.getElementById('hiddenScores').innerHTML = html;
+}
+
+function escapeAttr(s) { return String(s||'').replace(/"/g,'&quot;'); }
+
+function addOpt() {
+  var idx = document.querySelectorAll('#optsList .opt-row').length;
+  var t = document.getElementById('fType').value;
+  if (t === 'judge') {
+    if (idx >= 3) { toast('判断题最多3个符号'); return; }
+  }
+  // 临时把当前表单收集起来再加
+  var q = collectForm(false);
+  if (t === 'judge') {
+    var sym = q.sym || ['✅','❌'];
+    sym.push('❓');
+    q.sym = sym;
+  }
+  q.o.push(t==='judge' ? {s:{}} : {l: String.fromCharCode(65+idx)+'. ', s:{}});
+  fillForm(q);
+}
+
+function delOpt(j) {
+  var q = collectForm(false);
+  if (q.o.length <= 2) { toast('至少要保留2个选项'); return; }
+  q.o.splice(j, 1);
+  if (q.t === 'judge' && q.sym) q.sym.splice(j, 1);
+  fillForm(q);
+}
+
+function collectForm(strict) {
+  var t = document.getElementById('fType').value;
+  var q = {t: t, tx: document.getElementById('fText').value};
+  var au = document.getElementById('fAudio').value.trim();
+  if (au) q.au = au;
+  var img = document.getElementById('fImg').value.trim();
+  if (img) q.img = img;
+  var hint = document.getElementById('fHint').value.trim();
+  if (hint) q.hint = hint;
+
+  // 选项
+  q.o = [];
+  var rows = document.querySelectorAll('#optsList .opt-row');
+  if (t === 'judge') {
+    q.sym = [];
+    rows.forEach(function(row, i) {
+      // 判断题符号从 .opt-idx 文字读
+      var sym = row.querySelector('.opt-idx').textContent.trim();
+      q.sym.push(sym);
+      var s = {};
+      row.querySelectorAll('.dim-input').forEach(function(inp) {
+        var v = parseInt(inp.value);
+        if (!isNaN(v) && v !== 0) s[inp.dataset.dim] = v;
+      });
+      var au = row.querySelector('.opt-au').value.trim();
+      var tag = row.querySelector('.opt-tag').value.trim();
+      var opt = {s: s};
+      if (au) opt.au = au;
+      if (tag) opt.tag = tag.split(',').map(function(x){return x.trim()}).filter(Boolean);
+      q.o.push(opt);
+    });
+  } else {
+    rows.forEach(function(row) {
+      var l = row.querySelector('.opt-text').value;
+      var s = {};
+      row.querySelectorAll('.dim-input').forEach(function(inp) {
+        var v = parseInt(inp.value);
+        if (!isNaN(v) && v !== 0) s[inp.dataset.dim] = v;
+      });
+      var au = row.querySelector('.opt-au').value.trim();
+      var tag = row.querySelector('.opt-tag').value.trim();
+      var opt = {l: l, s: s};
+      if (au) opt.au = au;
+      if (tag) opt.tag = tag.split(',').map(function(x){return x.trim()}).filter(Boolean);
+      q.o.push(opt);
+    });
+  }
+
+  // 隐藏选项
+  if (t === 'choice' && document.getElementById('fHasHidden').checked) {
+    q.hid = true;
+    var hl = document.getElementById('fHiddenLabel').value;
+    var hs = {};
+    document.querySelectorAll('.hidden-dim-input').forEach(function(inp) {
+      var v = parseInt(inp.value);
+      if (!isNaN(v) && v !== 0) hs[inp.dataset.dim] = v;
+    });
+    var ht = document.getElementById('fHiddenTags').value.trim();
+    var ho = {l: hl, s: hs};
+    if (ht) ho.tag = ht.split(',').map(function(x){return x.trim()}).filter(Boolean);
+    q.ho = ho;
+  }
+
+  // 校验
+  if (strict) {
+    if (!q.tx) { toast('题干不能为空'); return null; }
+    if (q.o.length < 2) { toast('至少需要2个选项'); return null; }
+  }
+  return q;
+}
+
+function saveQuestion() {
+  var q = collectForm(true);
+  if (!q) return;
+  if (editingIdx === -1) {
+    QS.push(q);
+    toast('已新增第'+QS.length+'题');
+  } else {
+    QS[editingIdx] = q;
+    toast('已保存第'+(editingIdx+1)+'题');
+  }
+  save(); render(); closeModal();
+}
+
+// ====== 导入 / 导出 ======
+function showExport() {
+  document.getElementById('ioTitle').textContent = '📤 导出 JSON';
+  document.getElementById('exportArea').value = JSON.stringify(QS, null, 2);
+  document.getElementById('exportArea').readOnly = true;
+  document.getElementById('ioActionBtn').textContent = '复制到剪贴板';
+  document.getElementById('ioActionBtn').dataset.mode = 'copy';
+  document.getElementById('ioModal').classList.add('show');
+}
+function showImport() {
+  document.getElementById('ioTitle').textContent = '📥 导入 JSON';
+  document.getElementById('exportArea').value = '';
+  document.getElementById('exportArea').readOnly = false;
+  document.getElementById('exportArea').placeholder = '把之前导出的 JSON 粘贴到这里…';
+  document.getElementById('ioActionBtn').textContent = '导入';
+  document.getElementById('ioActionBtn').dataset.mode = 'import';
+  document.getElementById('ioModal').classList.add('show');
+}
+function closeIoModal() {
+  document.getElementById('ioModal').classList.remove('show');
+}
+function ioAction() {
+  var mode = document.getElementById('ioActionBtn').dataset.mode;
+  if (mode === 'copy') {
+    var ta = document.getElementById('exportArea');
+    ta.select();
+    try { document.execCommand('copy'); toast('已复制到剪贴板，发给我即可'); } catch(e) { toast('请手动复制'); }
+  } else {
+    try {
+      var data = JSON.parse(document.getElementById('exportArea').value);
+      if (!Array.isArray(data)) throw new Error('不是数组');
+      QS = data;
+      save(); render(); closeIoModal();
+      toast('已导入 ' + data.length + ' 道题');
+    } catch(e) {
+      toast('JSON 格式错误：' + e.message);
+    }
+  }
+}
+
+// ====== 拖拽排序 ======
+var dragSrc = null;
+document.addEventListener('dragstart', function(e) {
+  if (!e.target.classList.contains('q-handle')) return;
+  dragSrc = e.target.closest('.qcard');
+  dragSrc.classList.add('dragging');
+});
+document.addEventListener('dragover', function(e) {
+  if (!dragSrc) return;
+  e.preventDefault();
+  var card = e.target.closest('.qcard');
+  if (card && card !== dragSrc) {
+    var rect = card.getBoundingClientRect();
+    var after = (e.clientY - rect.top) > rect.height/2;
+    if (after) card.parentNode.insertBefore(dragSrc, card.nextSibling);
+    else card.parentNode.insertBefore(dragSrc, card);
+  }
+});
+document.addEventListener('dragend', function() {
+  if (!dragSrc) return;
+  dragSrc.classList.remove('dragging');
+  // 根据新DOM顺序重排QS
+  var cards = document.querySelectorAll('.qcard');
+  var newQS = [];
+  cards.forEach(function(c) {
+    var i = parseInt(c.dataset.idx);
+    newQS.push(QS[i]);
+  });
+  QS = newQS;
+  save(); render();
+  dragSrc = null;
+});
+
+// ====== Toast ======
+var toastTimer;
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function(){t.classList.remove('show')}, 2000);
+}
+
+// ====== 自定义确认对话框（替代原生 confirm，预览容器中 confirm 可能失效）======
+var _confirmCb = null;
+function myConfirm(msg, cb, opts) {
+  opts = opts || {};
+  document.getElementById('confirmTitle').textContent = opts.title || '⚠️ 确认';
+  document.getElementById('confirmMsg').textContent = msg;
+  document.getElementById('confirmOkBtn').textContent = opts.okText || '确认';
+  _confirmCb = cb;
+  document.getElementById('confirmModal').classList.add('show');
+}
+function confirmOk() {
+  document.getElementById('confirmModal').classList.remove('show');
+  if (_confirmCb) _confirmCb(true);
+  _confirmCb = null;
+}
+function confirmCancel() {
+  document.getElementById('confirmModal').classList.remove('show');
+  if (_confirmCb) _confirmCb(false);
+  _confirmCb = null;
+}
+
+// ====== 初始化 ======
+if (!load()) {
+  QS = JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+render();
+</script>
+</body>
+</html>

@@ -45,6 +45,7 @@ body{font-family:'Noto Sans SC',-apple-system,sans-serif;background:var(--bg);co
 .ab:hover{background:rgba(200,151,90,.16)}
 
 .ops{display:flex;flex-direction:column;gap:9px;width:100%}
+.otip{text-align:center;font-size:12px;color:#bbb;margin-top:10px;letter-spacing:.5px}
 .ob{background:var(--card);border:1.5px solid var(--ln);border-radius:14px;padding:14px 16px;font-size:15px;font-weight:400;color:var(--txt);cursor:pointer;transition:all .2s;text-align:left;line-height:1.6;position:relative;font-family:inherit}
 .ob:hover{border-color:var(--wb);background:var(--wl)}
 .ob.sl{border-color:var(--warm);background:var(--wl);color:var(--warm);font-weight:500}
@@ -336,7 +337,10 @@ function rdr(){
   }else{
     q.o.forEach(function(o,i){h+='<button class="ob'+(sv===i?' sl':'')+'" data-i="'+i+'" onclick="pc('+i+')">'+o.l+'</button>'});
   }
-  a.innerHTML='<div class="qs on"><div class="pb"><div class="pt"><div class="pf" style="width:'+p+'%"></div></div><div class="pn">'+(cq+1)+'/'+Q.length+'</div></div><div class="qm"><div class="qinner"><div>'+tg+'</div><div class="qt">'+q.tx+'</div>'+scH+auh+'<div class="ops" id="oa">'+h+'</div></div></div></div>';
+  var tip='';
+  if(q.t==='multi') tip='<div class="otip">选好后请手动点击下一题</div>';
+  else if(cq===6) tip='<div class="otip">音频播放完毕将自动跳转</div>';
+  a.innerHTML='<div class="qs on"><div class="pb"><div class="pt"><div class="pf" style="width:'+p+'%"></div></div><div class="pn">'+(cq+1)+'/'+Q.length+'</div></div><div class="qm"><div class="qinner"><div>'+tg+'</div><div class="qt">'+q.tx+'</div>'+scH+auh+'<div class="ops" id="oa">'+h+'</div>'+tip+'</div></div></div>';
   if(q.hid){
     if(ht) clearTimeout(ht);
     var hidQ=cq;

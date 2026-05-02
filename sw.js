@@ -1,6 +1,6 @@
 // NMTI Service Worker - 离线缓存静态资源
 // 策略：install 只预缓存首屏关键资源，其他靠 fetch 懒缓存（stale-while-revalidate）
-const CACHE_VERSION = 'nmti-v20260502-h2';
+const CACHE_VERSION = 'nmti-v20260502-i';
 const CACHE_NAME = 'nmti-assets-' + CACHE_VERSION;
 
 // 首屏必需（install 预缓存）
@@ -55,8 +55,30 @@ self.addEventListener('fetch', function(e){
   var url = new URL(req.url);
   if(url.origin !== self.location.origin) return;
   if(url.pathname.indexOf('/admin') === 0) return;
-  if(url.hostname.indexOf('tcloudbase.com') >= 0) return;
+  if(url.hostname.indexOf('tcloudbase.com') >= 0 && url.hostname.indexOf('app.tcloudbase') >= 0) return; // 云函数
 
+  // HTML / JS / CSS：network-first（保证用户总能拿到最新逻辑）
+  // 图片 / 音频：stale-while-revalidate（离线可用 + 快速响应）
+  var isHTML = url.pathname === '/' || url.pathname.endsWith('.html') || url.pathname.endsWith('/');
+  var isScript = url.pathname.endsWith('.js') || url.pathname.endsWith('.css');
+
+  if(isHTML || isScript){
+    e.respondWith(
+      caches.open(CACHE_NAME).then(function(cache){
+        return fetch(req).then(function(resp){
+          if(resp && resp.status === 200){
+            cache.put(req, resp.clone()).catch(function(){});
+          }
+          return resp;
+        }).catch(function(){
+          return cache.match(req);
+        });
+      })
+    );
+    return;
+  }
+
+  // 其他资源：stale-while-revalidate
   e.respondWith(
     caches.open(CACHE_NAME).then(function(cache){
       return cache.match(req).then(function(cached){
